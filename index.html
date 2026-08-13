@@ -132,7 +132,22 @@ const CAREERS={
  teacher:{n:'音樂老師',d:'把東西交出去的人',fameL:'口碑',bodyL:'熱情',craftL:'底子',
    unit:'人',metric:'教過的學生',inc:2.4,e:{craft:3,fame:-2,body:4,money:6}}
 };
-const VOICES={'低沉':{craft:2},'清亮':{fame:2},'沙啞':{craft:3,body:-3},'高亢':{fame:3,body:-4}};
+/* 四種天賦原型，五個職業各有各的說法，但吃的是同一套倍率 */
+const ARCH={
+ A:{n:'精準',craft:1.18,bias:0.72,d:'學得比別人快，但你對自己永遠比別人嚴——自評會一直低於實力'},
+ B:{n:'外放',fame:1.30,bias:1.45,d:'數字漲得比別人快，自我感覺也漲得比別人快'},
+ C:{n:'特色',craft:1.22,wear:1.55,d:'辨識度高，代價是你比別人耗得快'},
+ D:{n:'耐操',wear:0.55,yips:0.50,d:'磨損慢，大場面也不太抖——但你沒有特別突出的地方'}
+};
+const TRAITS={
+ singer:{label:'你的聲線',opts:{'清亮':'A','高亢':'B','沙啞':'C','低沉':'D'}},
+ producer:{label:'你的耳朵天生',opts:{'很準':'A','很快':'B','很挑':'C','很雜食':'D'}},
+ writer:{label:'你寫東西靠的是',opts:{'邏輯':'A','耳朵':'B','情緒':'C','記性':'D'}},
+ session:{label:'你的手天生',opts:{'視譜快':'A','即興強':'B','音色特別':'C','拍子穩':'D'}},
+ teacher:{label:'你天生',opts:{'很會示範':'A','很會鼓勵':'B','要求很高':'C','有耐心':'D'}}
+};
+const TR=s=>ARCH[s.arch]||ARCH.D;
+const trM=(s,k)=>{const t=TR(s);return t[k]===undefined?1:t[k]};
 const RIVALS=['李芷寧','阿凱','周子恆','Vera','小鹿'];
 const C=s=>CAREERS[s.career];
 
@@ -140,15 +155,16 @@ const C=s=>CAREERS[s.career];
 let S=null;
 function newGame(name,career,vtype,seed){
   RNG=mkRNG(seed);
-  const s={seed,name,career,vtype,age:16,year:2026,
+  const s={seed,name,career,vtype,arch:'D',age:16,year:2026,
     craft:20,fame:3,body:80,money:0,
     bias:0,optimism:50,yips:0,
     comparing:true,rivalFame:5,rivalName:pick(RIVALS),
-    trap:0,pushed:0,attrib:[],taught:null,stopCompareAge:null,
+    trap:0,pushed:0,attrib:[],taught:null,stopCompareAge:null,pts:0,spent:{craft:0,fame:0,body:0,mind:0},
     student:0,path:[],history:[],log:[],used:new Set(),
     works:0,worksSum:0,peakWork:0,over:false};
   const e=CAREERS[career].e;for(const k in e)s[k]+=e[k];
-  for(const k in VOICES[vtype])s[k]+=VOICES[vtype][k];
+  s.arch=TRAITS[career].opts[vtype]||'D';
+  if(s.arch==='D')s.body+=6;   // 耐操的人底子厚一點
   s.path.push({age:16,c:career});
   return s;
 }
@@ -441,7 +457,10 @@ const SWITCH={
 function applyE(s,e){
   const d={};
   for(const k in e){let v=e[k];
-    if(k==='craft'&&v>0){v*=(1-s.craft/115);v*=(1-s.yips/300);if(s.body<40)v*=0.6}
+    if(k==='craft'&&v>0){v*=(1-s.craft/115);v*=(1-s.yips/300);v*=trM(s,'craft');if(s.body<40)v*=0.6}
+    if(k==='fame'&&v>0)v*=trM(s,'fame');
+    if(k==='body'&&v<0)v*=trM(s,'wear');
+    if(k==='yips'&&v>0)v*=trM(s,'yips');
     s[k]=(s[k]||0)+v;d[k]=v}
   s.craft=clamp(s.craft,1,100);s.fame=clamp(s.fame,0,100);s.body=clamp(s.body,0,100);
   s.yips=clamp(s.yips,0,100);s.bias=clamp(s.bias,-38,38);s.optimism=clamp(s.optimism,0,100);
@@ -459,23 +478,34 @@ function nextEvent(s){
 
 const app=document.getElementById('app');
 function titleScreen(){
-  let career='singer',vt='清亮';
+  let career='singer',vt='低沉';
   app.innerHTML=`<div class="title-screen">
     <h1><span class="en">E C H O</span>回音</h1>
     <p class="tagline">音樂人生模擬器。五種職業、可以中途轉行、十五種結局。畫面上會有很多數字，但沒有一個數字是真的。</p>
     <div class="field"><label>名字</label><input id="nm" type="text" placeholder="例：林向晚" maxlength="10"></div>
     <div class="field"><label>你想做的</label><div class="careers" id="cg">${Object.entries(CAREERS).map(([k,v])=>
       `<button class="career${k==='singer'?' sel':''}" data-v="${k}"><b>${v.n}</b><small>${v.d}　·　你會一直盯著「${v.fameL}」這個數字，一直燒掉你的「${v.bodyL}」</small></button>`).join('')}</div></div>
-    <div class="field"><label>天生的東西</label><div class="grid4" id="vg">${Object.keys(VOICES).map(k=>
-      `<button class="role${k==='清亮'?' sel':''}" data-v="${k}">${k}</button>`).join('')}</div></div>
+    <div class="field"><label id="vlab">${TRAITS[career].label}</label><div class="grid4" id="vg"></div>
+      <p class="muted" id="vdesc" style="margin-top:8px"></p></div>
     <div class="field"><label>世界種子</label><div class="seedline"><input id="sd" type="text" value="${(new URLSearchParams(location.search).get('seed')||newSeed())}"><button class="reroll" id="rr">換一個</button></div>
       <p class="muted" style="margin-top:8px">相同種子＋相同選擇＝相同人生。</p></div>
     <button class="primary" id="go">開始 ▸ 十六歲</button>
     <p class="footer">機制：Seligman 歸因風格・Wegner 白熊效應・Kahneman 峰終定律・社會比較理論</p></div>`;
+  const renderTraits=()=>{
+    const T=TRAITS[career];vt=Object.keys(T.opts)[0];
+    document.getElementById('vlab').textContent=T.label;
+    document.getElementById('vg').innerHTML=Object.keys(T.opts).map((k,i)=>
+      `<button class="role${i===0?' sel':''}" data-v="${k}">${k}</button>`).join('');
+    showDesc();
+  };
+  const showDesc=()=>{const a=ARCH[TRAITS[career].opts[vt]];
+    document.getElementById('vdesc').textContent=a?`${a.n}型 —— ${a.d}`:''};
+  renderTraits();
   document.getElementById('cg').onclick=e=>{const b=e.target.closest('.career');if(!b)return;
-    document.querySelectorAll('#cg .career').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');career=b.dataset.v};
+    document.querySelectorAll('#cg .career').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+    career=b.dataset.v;renderTraits();};   // 換職業，天生的東西要跟著換
   document.getElementById('vg').onclick=e=>{const b=e.target.closest('.role');if(!b)return;
-    document.querySelectorAll('#vg .role').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');vt=b.dataset.v};
+    document.querySelectorAll('#vg .role').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');vt=b.dataset.v;showDesc()};
   document.getElementById('rr').onclick=()=>document.getElementById('sd').value=newSeed();
   document.getElementById('go').onclick=()=>{
     const sd=(document.getElementById('sd').value||newSeed()).trim();
@@ -499,6 +529,7 @@ function turn(){
   if(s.money<-55)return ending('broke');
   if(s.age>=42)return ending('auto');
   if((s.age===27||s.age===33)&&!s.used.has('sw'+s.age))return switchScreen();
+  if([20,24,28,32,36,40].indexOf(s.age)>=0&&!s.used.has('tr'+s.age)&&s.pts>0)return trainScreen();
   const ev=nextEvent(s);
   if(!ev){const f=pick(FILLER);
     render(`<div class="age-mark">${s.age} 歲 · ${s.year}</div><h2>${f.t}</h2><p class="body-text">${f.x}</p>
@@ -509,6 +540,26 @@ function turn(){
   render(`<div class="age-mark">${s.age} 歲 · ${s.year}</div><h2>${ev.t}</h2><p class="body-text">${x}</p>
     <div class="opts">${ev.c.map((c,i)=>`<button class="opt" data-i="${i}">${c.l}</button>`).join('')}</div>`);
   document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(ev,ev.c[+b.dataset.i]));
+}
+
+function trainScreen(){
+  const s=S,c=C(s);
+  const TR_OPTS=[
+    {k:'craft',t:'練基本功',d:`把時間丟進去，${c.craftL}會長`,run:()=>applyE(s,{craft:1.9})},
+    {k:'fame',t:'跑曝光',d:`到處露臉、經營、認識人，${c.fameL}會漲`,run:()=>applyE(s,{fame:1.9})},
+    {k:'body',t:'保養',d:`睡覺、復健、少接一點，${c.bodyL}回得來`,run:()=>applyE(s,{body:3.6})},
+    {k:'mind',t:'心理素質',d:'看醫生、練呼吸、學會不去想那件事',run:()=>{s.yips=clamp(s.yips-7,0,100);s.optimism=clamp(s.optimism+2,0,100)}}
+  ];
+  const draw=()=>{
+    render(`<div class="age-mark">${s.age} 歲 · ${s.year}</div><h2>這幾年你要練什麼</h2>
+      <p class="body-text">剩下 <b class="mono" style="color:var(--amber);font-size:1.3rem">${s.pts}</b> 點。點完為止，沒用掉的會留到下次。</p>
+      <div class="opts">${(s.pts>0?TR_OPTS:[]).map((o,i)=>`<button class="opt" data-p="${i}">${o.t}　<span class="muted">${o.d}</span>${s.spent[o.k]?`<span class="mono" style="float:right;color:var(--cyan)">+${s.spent[o.k]}</span>`:''}</button>`).join('')}
+      <button class="opt" id="trdone" style="border-left-color:var(--cyan)">${s.pts>0?'剩下的留著 ▸':'練完了 ▸'}</button></div>`);
+    document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{
+      if(s.pts<=0)return;const o=TR_OPTS[+b.dataset.p];o.run();s.spent[o.k]++;s.pts--;draw()});
+    document.getElementById('trdone').onclick=()=>{s.used.add('tr'+s.age);turn()};
+  };
+  draw();
 }
 
 function switchScreen(){
@@ -542,8 +593,9 @@ function choose(ev,c){
   const r=typeof c.r==='function'?c.r(s):c.r;
   if(ev.id==='rival2'||ev.id==='rivalbig')s.lastRival=s.age;
   s.log.push({age:s.age,t:ev.t,line:r,int:c.int||30,o:c.o,unit:C(s).unit,aud:(c.e&&c.e.fame>=8&&c.o>=0)?reach(s):null});
-  if(d.fame)s.bias+=d.fame*0.35;
-  if(c.o>0)s.bias+=3.4+(s.optimism-50)/18;else if(c.o<0)s.bias-=3.6-(s.optimism-50)/16;
+  const bm=trM(s,'bias');
+  if(d.fame)s.bias+=d.fame*0.35*bm;
+  if(c.o>0)s.bias+=(3.4+(s.optimism-50)/18)*bm;else if(c.o<0)s.bias-=(3.6-(s.optimism-50)/16)*bm;
   s.bias*=0.975;
   const cc=C(s),nm={craft:cc.craftL,fame:cc.fameL,body:cc.bodyL,money:'錢',student:'學生'};
   const dl=Object.entries(d).filter(([k,v])=>nm[k]&&Math.abs(v)>0.4)
@@ -584,10 +636,11 @@ function advance(){
   const s=S;
   s.history.push({age:s.age,real:Math.round(s.craft),self:shown(s),fame:Math.round(s.fame)});
   s.age++;s.year++;
-  if(s.age>33){s.craft-=0.9+(s.age-33)*0.12;s.body-=1.1}
+  s.pts+=(s.age<=22?2:1);
+  if(s.age>33){s.craft-=0.9+(s.age-33)*0.12;s.body-=1.1*trM(s,'wear')}
   if(s.age>28)s.fame-=0.6;
-  s.body+=0.2-(0.6+s.fame/45);   // 越忙磨越快，讓第四格永遠是活的
-  s.craft+=(1-s.yips/140)*(s.body<40?0.4:0.85);
+  s.body+=0.2-(0.6+s.fame/45)*trM(s,'wear');   // 越忙磨越快，讓第四格永遠是活的
+  s.craft+=(1-s.yips/140)*(s.body<40?0.4:0.85)*trM(s,'craft');
   s.bias*=0.985;
   s.money+=Math.min(5.5,s.fame/11)-2.6+C(s).inc;
   s.craft=clamp(s.craft,1,100);s.fame=clamp(s.fame,0,100);s.body=clamp(s.body,0,100);
@@ -603,21 +656,21 @@ function resolveEnding(s,how){
     l:'最後那次是很小的事。小到你事後說起來，別人都不太懂。'};
   let r,low=false;
   if(c==='singer'){
-    if(s.fame>55)r={k:'最後一場',s:'你走到了你想去的位置，然後自己走下來。',l:'安可完，你站在台上看了很久才走。'};
-    else if(s.fame>24)r={k:'一首歌',s:'你有一首大家都會唱的歌，然後就沒有了。',l:'每次自我介紹，對方都會說出那首歌的名字，然後停住。'};
+    if(s.fame>60)r={k:'最後一場',s:'你走到了你想去的位置，然後自己走下來。',l:'安可完，你站在台上看了很久才走。'};
+    else if(s.fame>32)r={k:'一首歌',s:'你有一首大家都會唱的歌，然後就沒有了。',l:'每次自我介紹，對方都會說出那首歌的名字，然後停住。'};
     else{low=true;r={k:'沒有被記住的那個聲音',s:'你唱得比很多紅的人好。這件事沒有任何用處，但它是真的。',l:'某年某個小場子，有七個人是專程來的。你記得那七張臉。'}}
   }else if(c==='producer'){
-    if(s.fame>48)r={k:'幕後',s:'你的名字在小字裡，但內行的人都知道。',l:'頒獎典禮上有人謝了你。鏡頭找了你三秒，你剛好在低頭。'};
+    if(s.fame>44)r={k:'幕後',s:'你的名字在小字裡，但內行的人都知道。',l:'頒獎典禮上有人謝了你。鏡頭找了你三秒，你剛好在低頭。'};
     else{low=true;r={k:'工程檔',s:'你做過的東西比你有名很多。',l:'那些資料夾的名字都是日期。你自己還記得每一個裡面有什麼。'}}
   }else if(c==='writer'){
     if(s.craft>58&&s.fame<48)r={k:'歌比你活得久',s:'很多人會唱那首，沒什麼人知道是你。',l:'有一天你在早餐店聽到它，老闆娘跟著哼，哼錯了一個字。'};
     else if(s.fame>48)r={k:'有名字的作者',s:'他們開始在歌名後面加上你。',l:'新人來找你的時候會先說「我是聽你寫的歌長大的」。'};
     else{low=true;r={k:'抽屜',s:'你寫了很多，交出去的是少數。',l:'那個資料夾一直在。你每年會打開一次，改一個字。'}}
   }else if(c==='session'){
-    if(s.craft>60)r={k:'一直有工作的那個人',s:'沒有人為你買票，但每個人都想約你。',l:'你的名字在 credit 的第四行。四十年來，一直在。'};
+    if(s.craft>76)r={k:'一直有工作的那個人',s:'沒有人為你買票，但每個人都想約你。',l:'你的名字在 credit 的第四行。四十年來，一直在。'};
     else{low=true;r={k:'第四行',s:'你在很多張唱片裡，沒有一張是你的。',l:'有次你女兒問你是做什麼的。你想了三秒才回答。'}}
   }else{
-    if(s.student>38)r={k:'他們的老師',s:'你的名字在別人的謝辭裡。',l:'你這輩子最好的作品會走路，而且不姓你的姓。'};
+    if(s.student>30)r={k:'他們的老師',s:'你的名字在別人的謝辭裡。',l:'你這輩子最好的作品會走路，而且不姓你的姓。'};
     else{low=true;r={k:'教過的那些人',s:'你沒有紅，但你在很多人的第一年裡。',l:'路上被叫住的機率，比你當年上台的次數還高。'}}
   }
   if(multi&&low)return{k:'換過位置的人',s:'你不是放棄，你是換了一個離音樂比較近的位子。',
@@ -670,6 +723,10 @@ function ending(how){
       <li><b>自評與真實的最大落差</b>在 ${maxGap.age} 歲：你以為自己 ${maxGap.self}，實際上 ${maxGap.real}。${maxGap.self>maxGap.real?'你高估了自己，然後接下了扛不住的東西。':'你低估了自己，在你最強的時候想放棄。'}</li>
       <li><b>歸因風格：</b>你最常${an}。${s.optimism>60?'復原很快，代價是你對自己的判斷越來越不準。':s.optimism<40?'你看自己看得很清楚，代價是每次低潮都特別長。':'你在兩者之間搖擺。'}</li>
       ${taughtLine}
+      <li><b>你把點數花在：</b>${(()=>{const L={craft:C(s).craftL,fame:C(s).fameL,body:C(s).bodyL,mind:'心理素質'};
+        const e=Object.entries(s.spent).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+        return e.length?e.map(([k,v])=>`${L[k]} ${v}`).join('、'):'什麼都沒練';})()}。</li>
+      <li><b>天賦（${s.vtype}・${TR(s).n}型）：</b>${TR(s).d}。</li>
       <li><b>白熊陷阱：</b>踩了 ${s.trap} 次。越告訴自己「不要出錯」，負責監控那個念頭的大腦就一直把它叫出來。</li>
       <li><b>${c.bodyL}：</b>你硬撐了 ${s.pushed} 次。每一次當下都很划算。</li>
       <li><b>社會比較：</b>${s.stopCompareAge?`你在 ${s.stopCompareAge} 歲停止追蹤${s.rivalName}。之後自我評價穩定了，動力也少了一塊。`:`你比較了一輩子。${s.rivalName}最後是 ${Math.round(s.rivalFame)}，你是 ${Math.round(s.fame)}。`}</li>
