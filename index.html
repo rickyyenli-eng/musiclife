@@ -141,10 +141,10 @@ const CAREERS={
 };
 /* 四種天賦原型，五個職業各有各的說法，但吃的是同一套倍率 */
 const ARCH={
- A:{n:'精準',craft:1.18,bias:0.72,d:'學得比別人快，但你對自己永遠比別人嚴——自評會一直低於實力'},
- B:{n:'外放',fame:1.30,bias:1.45,d:'數字漲得比別人快，自我感覺也漲得比別人快'},
- C:{n:'特色',craft:1.22,wear:1.55,d:'辨識度高，代價是你比別人耗得快'},
- D:{n:'耐操',wear:0.55,yips:0.50,d:'磨損慢，大場面也不太抖——但你沒有特別突出的地方'}
+ A:{n:'精準',craft:1.18,bias:0.72,d:'你聽得出自己哪裡不對，而且改得掉。',dEnd:'學得比別人快，但你對自己永遠比別人嚴——自評會一直低於實力'},
+ B:{n:'外放',fame:1.30,bias:1.45,d:'你站得上去，也開得了口。',dEnd:'數字漲得比別人快，自我感覺也漲得比別人快'},
+ C:{n:'特色',craft:1.22,wear:1.55,d:'沒有人會把你認成別人。',dEnd:'辨識度高，代價是你比別人耗得快'},
+ D:{n:'耐操',wear:0.55,yips:0.50,d:'你比別人不容易壞。',dEnd:'磨損慢，大場面也不太抖——但你沒有特別突出的地方'}
 };
 const TRAITS={
  singer:{label:'你的聲線',opts:{'清亮':'A','高亢':'B','沙啞':'C','低沉':'D'}},
@@ -549,7 +549,7 @@ function titleScreen(){
     <p class="tagline">音樂人生模擬器。五種職業、可以中途轉行、十五種結局。畫面上會有很多數字，但沒有一個數字是真的。</p>
     <div class="field"><label>名字</label><input id="nm" type="text" placeholder="例：林向晚" maxlength="10"></div>
     <div class="field"><label>你想做的</label><div class="careers" id="cg">${Object.entries(CAREERS).map(([k,v])=>
-      `<button class="career${k==='singer'?' sel':''}" data-v="${k}"><b>${v.n}</b><small>${v.d}　·　你會一直盯著「${v.fameL}」這個數字，一直燒掉你的「${v.bodyL}」</small></button>`).join('')}</div></div>
+      `<button class="career${k==='singer'?' sel':''}" data-v="${k}"><b>${v.n}</b><small>${v.d}</small></button>`).join('')}</div></div>
     <div class="field"><label id="vlab">${TRAITS[career].label}</label><div class="grid4" id="vg"></div>
       <p class="muted" id="vdesc" style="margin-top:8px"></p></div>
     <div class="field"><label>世界種子</label><div class="seedline"><input id="sd" type="text" value="${(new URLSearchParams(location.search).get('seed')||newSeed())}"><button class="reroll" id="rr">換一個</button></div>
@@ -564,7 +564,7 @@ function titleScreen(){
     showDesc();
   };
   const showDesc=()=>{const a=ARCH[TRAITS[career].opts[vt]];
-    document.getElementById('vdesc').textContent=a?`${a.n}型 —— ${a.d}`:''};
+    document.getElementById('vdesc').textContent=a?a.d:''};
   renderTraits();
   document.getElementById('cg').onclick=e=>{const b=e.target.closest('.career');if(!b)return;
     document.querySelectorAll('#cg .career').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
@@ -673,7 +673,8 @@ function choose(ev,c){
   if(c.taught)s.taught=c.taught;
   if(c.stopcmp){s.comparing=false;s.stopCompareAge=s.age}
   if(c.e&&c.e.fame>0){s.works++;s.worksSum+=reach(s);s.peakWork=Math.max(s.peakWork,reach(s))}
-  const r=typeof c.r==='function'?c.r(s):c.r;
+  let r=typeof c.r==='function'?c.r(s):c.r;
+  if(s.rollNote){r=r+'　'+s.rollNote;s.rollNote=null}   // 差一點要讓玩家看見，不然沒有意義
   if(ev.id==='rival2'||ev.id==='rivalbig')s.lastRival=s.age;
   s.log.push({age:s.age,t:ev.t,line:r,int:c.int||30,o:c.o,unit:C(s).unit,aud:(c.e&&c.e.fame>=8&&c.o>=0)?reach(s):null});
   const bm=trM(s,'bias');
@@ -776,13 +777,14 @@ function identityOf(s,tk){
    teacher:{high:'資深音樂老師',mid:'專職音樂老師',low:'兼課音樂老師',fail:'半途退場的音樂老師'}
   }[c][tk];
   if(tk==='fail') return `你最後是一個${NOUN}。`;   // 職稱本身已含「的」，不再加修飾
+  // 門檻依 800 局實測分位設定：聲量中位 25、實力中位 65、聲量減實力中位 −40
   let mod;
-  if(s.path.length>1) mod='半路出家的';
-  else if(f>60&&tk==='high') mod='全國都知道的';     // 低階職稱不會被說成全國都知道
-  else if(f<15) mod='沒沒無聞的';
-  else if(f>cr+12) mod='名氣跑在實力前面的';
-  else if(cr>f+18) mod='硬底子的';
-  else if(f>35) mod='小有名氣的';
+  if(f>=58&&tk!=='low') mod='全國都知道的';        // 聲量前 10%
+  else if(f-cr>=-8) mod='名氣跑在實力前面的';        // 落差前 12%
+  else if(f<=6) mod='沒沒無聞的';                  // 聲量後 10%
+  else if(f>=41) mod='小有名氣的';                 // 聲量前 25%
+  else if(s.path.length>2) mod='半路出家的';
+  else if(cr-f>=50) mod='硬底子的';                // 落差後 25%
   else mod='小圈子裡的';
   return `你最後是一個${mod}${NOUN}。`;
 }
@@ -896,7 +898,7 @@ function ending(how){
       <li><b>你把點數花在：</b>${(()=>{const L={craft:C(s).craftL,fame:C(s).fameL,body:C(s).bodyL,mind:'心理素質'};
         const e=Object.entries(s.spent).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);
         return e.length?e.map(([k,v])=>`${L[k]} ${v}`).join('、'):'什麼都沒練';})()}。</li>
-      <li><b>天賦（${s.vtype}・${TR(s).n}型）：</b>${TR(s).d}。</li>
+      <li><b>天賦（${s.vtype}・${TR(s).n}型）：</b>${TR(s).dEnd}。</li>
       <li><b>白熊陷阱：</b>踩了 ${s.trap} 次。越告訴自己「不要出錯」，負責監控那個念頭的大腦就一直把它叫出來。</li>
       ${s.bets?`<li><b>賭局：</b>你賭了 ${s.bets} 次，贏 ${s.betWins} 次（照標示的機率，期望值是 ${s.betExp.toFixed(1)} 次）。${s.betNear?`其中 ${s.betNear} 次是差一點——差一點在大腦裡跟贏很像，所以它讓人想再賭一次。`:''}${s.chase>=1?`有 ${s.chase} 次你是在剛輸完之後又押下去的，那叫追損。`:''}</li>`:''}
       <li><b>${c.bodyL}：</b>你硬撐了 ${s.pushed} 次。每一次當下都很划算。</li>
