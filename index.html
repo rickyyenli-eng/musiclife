@@ -117,6 +117,7 @@ t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const rnd=()=>RNG(),pick=a=>a[Math.floor(rnd()*a.length)];
 const newSeed=()=>Math.random().toString(36).slice(2,10);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd0=v=>{const n=Math.round(v);return Object.is(n,-0)?0:n};   // 避免印出 -0
 
 /* ===== 職業 =====
    每個職業盯的數字不一樣，body 是他會燒掉的那個東西 */
@@ -519,7 +520,7 @@ function hud(){const s=S,c=C(s);return `<div class="hud"><div class="hud-row">
   <div class="stat"><span class="k">${c.craftL}</span><span class="v">${shown(s)}</span></div>
   <div class="stat"><span class="k">${c.fameL}</span><span class="v">${Math.round(s.fame)}</span></div>
   <div class="stat"><span class="k">${c.bodyL}</span><span class="v${s.body<32?' warn':''}">${Math.round(s.body)}</span></div>
-  <div class="stat"><span class="k">錢(萬)</span><span class="v${s.money<0?' warn':''}">${Math.round(s.money)}</span></div>
+  <div class="stat"><span class="k">錢(萬)</span><span class="v${s.money<0?' warn':''}">${rnd0(s.money)}</span></div>
   </div><div class="selfnote">※ ${c.craftL}為自我評估值</div></div>`}
 function render(i){app.innerHTML=hud()+`<div class="scene">${i}</div>`;window.scrollTo(0,0)}
 
@@ -656,21 +657,21 @@ function resolveEnding(s,how){
     l:'最後那次是很小的事。小到你事後說起來，別人都不太懂。'};
   let r,low=false;
   if(c==='singer'){
-    if(s.fame>60)r={k:'最後一場',s:'你走到了你想去的位置，然後自己走下來。',l:'安可完，你站在台上看了很久才走。'};
+    if(s.fame>55)r={k:'最後一場',s:'你走到了你想去的位置，然後自己走下來。',l:'安可完，你站在台上看了很久才走。'};
     else if(s.fame>32)r={k:'一首歌',s:'你有一首大家都會唱的歌，然後就沒有了。',l:'每次自我介紹，對方都會說出那首歌的名字，然後停住。'};
     else{low=true;r={k:'沒有被記住的那個聲音',s:'你唱得比很多紅的人好。這件事沒有任何用處，但它是真的。',l:'某年某個小場子，有七個人是專程來的。你記得那七張臉。'}}
   }else if(c==='producer'){
-    if(s.fame>44)r={k:'幕後',s:'你的名字在小字裡，但內行的人都知道。',l:'頒獎典禮上有人謝了你。鏡頭找了你三秒，你剛好在低頭。'};
+    if(s.fame>28)r={k:'幕後',s:'你的名字在小字裡，但內行的人都知道。',l:'頒獎典禮上有人謝了你。鏡頭找了你三秒，你剛好在低頭。'};
     else{low=true;r={k:'工程檔',s:'你做過的東西比你有名很多。',l:'那些資料夾的名字都是日期。你自己還記得每一個裡面有什麼。'}}
   }else if(c==='writer'){
-    if(s.craft>58&&s.fame<48)r={k:'歌比你活得久',s:'很多人會唱那首，沒什麼人知道是你。',l:'有一天你在早餐店聽到它，老闆娘跟著哼，哼錯了一個字。'};
-    else if(s.fame>48)r={k:'有名字的作者',s:'他們開始在歌名後面加上你。',l:'新人來找你的時候會先說「我是聽你寫的歌長大的」。'};
+    if(s.craft>66&&s.fame<44)r={k:'歌比你活得久',s:'很多人會唱那首，沒什麼人知道是你。',l:'有一天你在早餐店聽到它，老闆娘跟著哼，哼錯了一個字。'};
+    else if(s.fame>44)r={k:'有名字的作者',s:'他們開始在歌名後面加上你。',l:'新人來找你的時候會先說「我是聽你寫的歌長大的」。'};
     else{low=true;r={k:'抽屜',s:'你寫了很多，交出去的是少數。',l:'那個資料夾一直在。你每年會打開一次，改一個字。'}}
   }else if(c==='session'){
-    if(s.craft>76)r={k:'一直有工作的那個人',s:'沒有人為你買票，但每個人都想約你。',l:'你的名字在 credit 的第四行。四十年來，一直在。'};
+    if(s.craft>73)r={k:'一直有工作的那個人',s:'沒有人為你買票，但每個人都想約你。',l:'你的名字在 credit 的第四行。四十年來，一直在。'};
     else{low=true;r={k:'第四行',s:'你在很多張唱片裡，沒有一張是你的。',l:'有次你女兒問你是做什麼的。你想了三秒才回答。'}}
   }else{
-    if(s.student>30)r={k:'他們的老師',s:'你的名字在別人的謝辭裡。',l:'你這輩子最好的作品會走路，而且不姓你的姓。'};
+    if(s.student>16)r={k:'他們的老師',s:'你的名字在別人的謝辭裡。',l:'你這輩子最好的作品會走路，而且不姓你的姓。'};
     else{low=true;r={k:'教過的那些人',s:'你沒有紅，但你在很多人的第一年裡。',l:'路上被叫住的機率，比你當年上台的次數還高。'}}
   }
   if(multi&&low)return{k:'換過位置的人',s:'你不是放棄，你是換了一個離音樂比較近的位子。',
@@ -710,7 +711,7 @@ function ending(how){
       <div class="row"><span>那一年你給自己打</span><span>${peakReal.self}</span></div>
       <div class="row"><span>${c.bodyL}剩下</span><span>${Math.round(s.body)}／100</span></div>
       ${s.student>0?`<div class="row"><span>學生的成就</span><span>${Math.round(s.student)}</span></div>`:''}
-      <div class="row"><span>存款</span><span>${Math.round(s.money)} 萬</span></div></div>
+      <div class="row"><span>存款</span><span>${rnd0(s.money)} 萬</span></div></div>
     <div class="doc memoir"><div class="stamp">DOCUMENT 2 — 回憶錄・由峰終定律生成</div>
       <h3>後來別人問起，你會這樣講：</h3>
       <p>「${peak.line}」——那是 ${peak.age} 歲。${peak.aud?`你記得那次大概${felt(s,peak.aud)}${peak.unit||c.unit}。`:''}</p>
