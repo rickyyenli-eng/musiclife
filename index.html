@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="description" content="回音 ECHO — 音樂人生模擬器。五種職業、可以中途轉行、十五種結局。畫面上會有很多數字，但沒有一個數字是真的。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="回音 ECHO — 音樂人生模擬器">
+<meta property="og:description" content="十六歲的第一次開口，到最後一場安可。歌手、製作人、詞曲作者、樂手、音樂老師——每個職業盯著的數字都不一樣，騙自己的方式也不一樣。">
+<meta property="og:url" content="https://rickyyenli-eng.github.io/musiclife/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="回音 ECHO — 音樂人生模擬器">
+<meta name="twitter:description" content="五種職業、可以中途轉行、十五種結局。相同種子＋相同選擇＝相同人生。">
+<meta name="theme-color" content="#150e19">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+<title>回音 ECHO — 音樂人生模擬器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--stage:#150e19;--velvet:#221429;--velvet2:#2c1a35;--amber:#f2a93b;--amber-dim:#8a6224;
+--cyan:#63c9c4;--paper:#ece2d0;--ink:#24201c;--dim:#9a8aa0;--red:#d8593f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--stage);color:#f3ecef;font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+font-size:16px;line-height:1.7;min-height:100vh;padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px);
+transition:background .9s ease,color .9s ease}
+body.lights-on{background:var(--paper);color:var(--ink)}
+.wrap{max-width:560px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+background:radial-gradient(120% 60% at 50% -10%, rgba(242,169,59,.20), rgba(242,169,59,0) 60%);transition:opacity .9s ease}
+body.lights-on .glow{opacity:0}
+h1{font-family:"Noto Serif TC",serif;font-weight:900;font-size:2.6rem;line-height:1.05;letter-spacing:.02em;margin:0}
+h1 .en{display:block;font-family:"Space Mono",monospace;font-weight:700;font-size:.72rem;letter-spacing:.42em;color:var(--amber);margin-bottom:14px}
+h2{font-family:"Noto Serif TC",serif;font-weight:900;font-size:1.35rem;margin:0 0 6px}
+.eyebrow{font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.3em;color:var(--dim)}
+.mono{font-family:"Space Mono",monospace}
+.muted{color:var(--dim);font-size:.86rem;line-height:1.6}
+body.lights-on .muted{color:#6d6259}body.lights-on .eyebrow{color:#8a7d6e}
+.title-screen{padding-top:7vh}
+.tagline{margin:18px 0 24px;color:#cbb9d0;font-size:.95rem}
+.field{margin-bottom:16px}
+label{display:block;font-family:"Space Mono",monospace;font-size:.66rem;letter-spacing:.24em;color:var(--dim);margin-bottom:7px}
+input[type=text]{width:100%;padding:13px 14px;border-radius:2px;background:var(--velvet);border:1px solid #3a2545;color:#fff;font-size:1rem;font-family:inherit}
+input:focus,button:focus-visible,.opt:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.careers{display:flex;flex-direction:column;gap:7px}
+.career{display:flex;gap:12px;align-items:baseline;text-align:left;padding:12px 14px;border:1px solid #3a2545;background:var(--velvet);
+border-radius:2px;cursor:pointer;transition:.15s;color:#e9e0ec;font-family:inherit;font-size:.95rem}
+.career b{font-weight:700;white-space:nowrap}
+.career small{color:var(--dim);font-size:.76rem;line-height:1.4}
+.career.sel{background:var(--amber);color:#1a1014;border-color:var(--amber)}
+.career.sel small{color:#5f4211}
+.role{padding:11px 4px;text-align:center;border:1px solid #3a2545;background:var(--velvet);border-radius:2px;
+cursor:pointer;font-size:.85rem;transition:.15s;color:#e9e0ec;font-family:inherit}
+.role.sel{background:var(--amber);color:#1a1014;border-color:var(--amber);font-weight:700}
+.seedline{display:flex;gap:8px}
+.seedline input{flex:1;font-family:"Space Mono",monospace;letter-spacing:.08em}
+.reroll{padding:13px 12px;background:none;border:1px solid #3a2545;color:var(--amber);border-radius:2px;font-family:"Space Mono",monospace;font-size:.8rem;cursor:pointer}
+button.primary{width:100%;margin-top:20px;padding:16px;border:none;border-radius:2px;background:var(--amber);color:#180f14;
+cursor:pointer;font-family:"Noto Serif TC",serif;font-weight:900;font-size:1.05rem;letter-spacing:.06em}
+button.primary:active{transform:translateY(1px)}
+.hud{position:sticky;top:0;z-index:5;background:rgba(21,14,25,.93);backdrop-filter:blur(8px);border-bottom:1px solid #33203c;margin:0 -20px;padding:10px 20px 11px}
+.hud-row{display:flex;justify-content:space-between;align-items:baseline;gap:4px}
+.stat{text-align:center;flex:1}
+.stat .k{font-family:"Space Mono",monospace;font-size:.56rem;letter-spacing:.12em;color:var(--dim);display:block}
+.stat .v{font-family:"Space Mono",monospace;font-size:1.1rem;font-weight:700;color:#fff}
+.stat .v.warn{color:var(--red)}
+.selfnote{text-align:center;font-size:.64rem;color:var(--amber-dim);margin-top:5px;font-family:"Space Mono",monospace;letter-spacing:.08em}
+.scene{padding-top:26px;animation:rise .45s ease}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.scene{animation:none}*{transition:none!important}}
+.age-mark{font-family:"Space Mono",monospace;font-size:.7rem;letter-spacing:.2em;color:var(--amber);margin-bottom:14px}
+.body-text{margin:14px 0 22px;font-size:1.02rem}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{text-align:left;padding:15px 16px;background:var(--velvet);border:1px solid #3a2545;border-left:3px solid var(--amber-dim);
+border-radius:2px;color:#f0e8f2;cursor:pointer;font-size:.97rem;line-height:1.55;font-family:inherit;transition:.15s}
+.opt:hover{background:var(--velvet2);border-left-color:var(--amber)}
+.opt:active{transform:translateY(1px)}
+.opt.switch{border-left-color:var(--cyan)}
+.outcome{border-left:3px solid var(--cyan);background:rgba(99,201,196,.07);padding:14px 16px;margin:18px 0;font-size:.95rem}
+.outcome.bad{border-left-color:var(--red);background:rgba(216,89,63,.08)}
+.deltas{margin-top:9px;font-family:"Space Mono",monospace;font-size:.76rem;color:var(--dim)}
+.deltas span{margin-right:12px}
+.up{color:var(--cyan)}.down{color:var(--red)}
+.rival{border:1px dashed #4a2f56;padding:14px 16px;margin:18px 0;border-radius:2px}
+.rival .n{font-family:"Space Mono",monospace;font-size:1.6rem;color:#fff}
+.ending{padding-top:30px}
+.endtitle{font-family:"Noto Serif TC",serif;font-weight:900;font-size:2.05rem;margin:10px 0 2px;line-height:1.2}
+.doc{background:#fff;color:var(--ink);padding:26px 22px;margin:20px 0;border-radius:2px;box-shadow:0 18px 40px rgba(0,0,0,.28)}
+.doc.ledger{font-family:"Space Mono",monospace;font-size:.86rem;line-height:1.9}
+.doc.ledger .row{display:flex;justify-content:space-between;border-bottom:1px dotted #cfc6b8;padding:3px 0;gap:10px}
+.doc.memoir{font-family:"Noto Serif TC",serif;font-size:1.02rem;line-height:2}
+.doc h3{font-family:"Noto Serif TC",serif;font-size:1.1rem;margin:0 0 4px}
+.doc .stamp{font-family:"Space Mono",monospace;font-size:.6rem;letter-spacing:.24em;color:#9a8f7e;margin-bottom:16px}
+.gap{background:#f7f2e6;border:1px solid #ddd2bd;padding:18px;margin:20px 0;color:var(--ink);border-radius:2px}
+.gap h3{font-family:"Noto Serif TC",serif;margin:0 0 10px;font-size:1.05rem}
+.gap li{margin-bottom:9px;font-size:.92rem;line-height:1.65}
+.gap ul{padding-left:18px;margin:0}
+svg .lbl{font-family:"Space Mono",monospace;font-size:9px}
+.legend{display:flex;gap:16px;font-family:"Space Mono",monospace;font-size:.68rem;margin-top:6px;color:#6d6259}
+.swatch{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px}
+.path{font-family:"Space Mono",monospace;font-size:.72rem;color:#8a7d6e;letter-spacing:.06em;margin-top:4px}
+.footer{margin-top:34px;text-align:center;font-size:.76rem;color:#8a7d6e;font-family:"Space Mono",monospace;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="wrap" id="app"></div>
+<script>
+/* ===== 種子亂數 ===== */
+function hashSeed(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}
+return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^=h>>>16)>>>0}}
+let RNG=null;
+function mkRNG(seed){let s=hashSeed(seed)();return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);
+t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rnd=()=>RNG(),pick=a=>a[Math.floor(rnd()*a.length)];
+const newSeed=()=>Math.random().toString(36).slice(2,10);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ===== 職業 =====
+   每個職業盯的數字不一樣，body 是他會燒掉的那個東西 */
+const CAREERS={
+ singer:{n:'歌手',d:'站在前面的人',fameL:'聲量',bodyL:'嗓子',craftL:'唱功',
+   unit:'人',metric:'演出場次',inc:0.6,e:{fame:6,craft:-1,body:0}},
+ producer:{n:'製作人',d:'讓別人聽起來很好的人',fameL:'掛名',bodyL:'耳朵',craftL:'品味',
+   unit:'首',metric:'掛名作品',inc:1.8,e:{craft:4,fame:-1,body:2}},
+ writer:{n:'詞曲作者',d:'歌比你先被認識',fameL:'被唱',bodyL:'存量',craftL:'筆力',
+   unit:'次',metric:'被唱過的歌',inc:0.9,e:{craft:6,fame:-3,body:-2}},
+ session:{n:'樂手',d:'被指名的那雙手',fameL:'通告',bodyL:'手',craftL:'技術',
+   unit:'場',metric:'錄音／演出場次',inc:2.6,e:{craft:7,fame:-2,body:-1}},
+ teacher:{n:'音樂老師',d:'把東西交出去的人',fameL:'口碑',bodyL:'熱情',craftL:'底子',
+   unit:'人',metric:'教過的學生',inc:2.4,e:{craft:3,fame:-2,body:4,money:6}}
+};
+const VOICES={'低沉':{craft:2},'清亮':{fame:2},'沙啞':{craft:3,body:-3},'高亢':{fame:3,body:-4}};
+const RIVALS=['李芷寧','阿凱','周子恆','Vera','小鹿'];
+const C=s=>CAREERS[s.career];
+
+/* ===== 狀態 ===== */
+let S=null;
+function newGame(name,career,vtype,seed){
+  RNG=mkRNG(seed);
+  const s={seed,name,career,vtype,age:16,year:2026,
+    craft:20,fame:3,body:80,money:0,
+    bias:0,optimism:50,yips:0,
+    comparing:true,rivalFame:5,rivalName:pick(RIVALS),
+    trap:0,pushed:0,attrib:[],taught:null,stopCompareAge:null,
+    student:0,path:[],history:[],log:[],used:new Set(),
+    works:0,worksSum:0,peakWork:0,over:false};
+  const e=CAREERS[career].e;for(const k in e)s[k]+=e[k];
+  for(const k in VOICES[vtype])s[k]+=VOICES[vtype][k];
+  s.path.push({age:16,c:career});
+  return s;
+}
+const shown=s=>clamp(Math.round(s.craft+s.bias),1,99);
+const reach=s=>Math.max(3,Math.round(5+Math.pow(s.fame,1.72)/2.4));
+const felt=(s,n)=>Math.max(1,Math.round(n*(1+s.bias/55)));
+
+/* ===== 事件 ===== */
+const EV=[
+/* ---------- 第一幕：共用（16-21） ---------- */
+{id:'first',p:1,must:1,t:'第一次被聽見',
+ x:s=>({singer:'校慶舞台，你排在熱舞社後面。麥克風高度不對，沒人幫你調。',
+  producer:'你把自己混的第一版丟給同學聽。他戴上耳機，聽了四十秒。',
+  writer:'你把歌詞印出來給人看。他一邊看一邊笑，你不知道是哪一種笑。',
+  session:'第一次幫別人伴奏。你練了兩個禮拜，他前一天才把譜給你。',
+  teacher:'你教隔壁班的人彈那首歌。他學會的那個瞬間你比自己學會還爽。'})[s.career],
+ c:[{l:'照最有把握的做',e:{craft:3,fame:3},r:s=>`結束了。大概${reach(s)}個人有真的在聽。`,o:-1,int:70},
+    {l:'放進一個沒人要求的東西',e:{craft:6,fame:1},r:'中間垮掉一次，但有一個人回頭問你那是什麼。',o:-1,int:78}]},
+
+{id:'mimic',p:1,must:1,t:'你很像誰',
+ x:s=>'有人跟你說：「這聽起來很像某某某。」你不確定這是不是誇獎。',
+ c:[{l:'那就更像一點，比較快',e:{fame:6,craft:-2,bias:5},r:'很順。有人說「聽起來很專業」，沒有人說「聽起來是你」。',o:0,int:45},
+    {l:'把那個習慣拆掉，重來',e:{craft:8,fame:-2,body:-3},r:'接下來半年你做得比以前爛。只有你知道為什麼。',o:0,int:62}]},
+
+{id:'notes',p:1,t:'講評',
+ x:s=>'紙上寫著一句：「技術沒問題，但我不會記得。」',
+ c:[{l:'把技術練到無懈可擊',e:{craft:5,yips:6},r:'你開始錄下自己每一次，聽到第三遍會不想聽。',o:-1,int:55},
+    {l:'去找只有你會做的那件事',e:{craft:4,fame:2},r:'你翻出家裡那卷卡帶，聽了一整晚。',o:0,int:66}]},
+
+{id:'family',p:1,must:1,t:'家裡',
+ x:s=>'「音樂可以，但你先給我考個能吃飯的。」',
+ c:[{l:'照做，晚上偷偷做',e:{money:6,craft:-2,fame:-2},r:'你變成很會分配時間的人，也變成很累的人。',o:0,int:52},
+    {l:'講清楚你要幹嘛',e:{craft:4,money:-6},r:'那頓飯之後沒有人再說話。你回房間做了一整夜。',o:0,int:76}]},
+
+{id:'trap1',p:1,trap:1,t:'那個地方',
+ x:s=>({singer:'指定曲最後有一個 High C。前三次練都上去了。',
+  producer:'交件前一晚，你知道自己老是把東西加太滿。',
+  writer:'截稿剩十二小時。你最怕寫出跟上一首一樣的東西。',
+  session:'那八小節的獨奏，你上次在同一個地方吃螺絲。',
+  teacher:'發表會你要示範。台下坐著所有學生的家長。'})[s.career],
+ c:[{l:'一直提醒自己：等一下絕對不能出錯',e:{yips:16,body:-4},r:'你整個過程都在等那個地方。到了那裡，身體先替你決定了。',o:-1,int:74},
+    {l:'把注意力放在第一個動作上',e:{craft:5,fame:3},r:'過去了。你事後才想起來那裡本來很難。',o:1,int:56}]},
+
+{id:'gear',p:1,t:'器材',
+ x:s=>'打工三個月，存款剛好卡在一件好器材跟半個月房租之間。',
+ c:[{l:'買下去',e:{craft:5,money:-8},r:'差別真的存在。你知道只有你聽得出來。',o:0,int:20},
+    {l:'先繳房租',e:{money:5,craft:1},r:'你用原本那套做完了。有人說「這個收得有點糊」。',o:0,int:18}]},
+
+{id:'school',p:1,t:'科班',
+ x:s=>'考音樂系要準備兩年，而且你不確定他們教的是你要的。',
+ c:[{l:'去考',e:{craft:7,money:-8,fame:2},r:'你學到很多，也學到有些人比你早十年開始。',o:0,int:58},
+    {l:'自己來',e:{craft:4,money:3},r:'你少了一張紙，多了三年時間，跟很多不知道對不對的習慣。',o:0,int:56}]},
+
+{id:'upload',p:1,t:'放上網',
+ x:s=>'安全的那種東西播放數是你真正想做的十二倍。',
+ c:[{l:'先做數字',e:{fame:9,craft:-2,bias:6},r:'數字很好看。你開始用播放數判斷自己做得好不好。',o:1,int:50},
+    {l:'照自己的做，慢就慢',e:{craft:7,fame:1},r:'一年後有個內行的私訊你：「你那個第三段很厲害。」',o:0,int:68}]},
+
+/* ---------- 第二幕：歌手 ---------- */
+{id:'s_edit',p:2,car:'singer',must:1,t:'剪接',
+ x:s=>'節目播出，你被剪成一個「為了家人而唱」的人。你媽看了很感動。',
+ c:[{l:'配合，這對曝光有用',e:{fame:13,craft:-3,bias:7},r:'路上有人認出你，喊的是那個人設。',o:1,int:66},
+    {l:'公開說那不是我',e:{fame:-5,craft:4},r:'之後他們沒有再找你。你睡得比較好。',o:-1,int:76}]},
+{id:'s_deal',p:2,car:'singer',must:1,t:'合約',
+ x:s=>'抽成很重，但他們有歌、有通路。附帶一條：選歌權在公司。',
+ c:[{l:'簽',e:{fame:15,money:12,craft:-3},r:'第一次有人幫你排行程，也是第一次你唱不喜歡的歌。',o:1,int:70},
+    {l:'自己來',e:{craft:7,money:-10},r:'你自己接通告、自己排練、自己搬東西。',o:0,int:66}]},
+{id:'s_tune',p:2,car:'singer',t:'修音',
+ x:s=>'那句唱得有情緒但音是歪的。工程師說：「修一下三十秒就好。」',
+ c:[{l:'修',e:{fame:4,craft:-3,bias:3},r:'成品很乾淨。你之後每次聽都只聽得到修過的地方。',o:0,int:42},
+    {l:'留著',e:{craft:6,fame:-1},r:'有人留言：「這句好像快哭了。」',o:1,int:68}]},
+{id:'s_tour',p:2,car:'singer',must:1,t:'巡演',
+ x:s=>'第四天你起床發現聲音只剩一半。後面還有八場。',
+ c:[{l:'降 key 照唱',e:{fame:8,body:-6,craft:2},r:'觀眾沒發現。你發現了。',o:0,int:64},
+    {l:'取消兩場',e:{money:-10,fame:-4,body:6},r:'留言有人說「不專業」。',o:-1,int:70},
+    {l:'打針上台',e:{fame:11,body:-16,money:4},r:'那是整趟最好的一場，也是聲帶開始壞掉的那一場。',o:1,int:86}]},
+{id:'s_trap2',p:2,car:'singer',trap:1,t:'直播',
+ x:s=>'全開麥。前奏的時候你想起上次破音的片段還在網路上。',
+ c:[{l:'反覆告訴自己：不要想上次',e:{yips:20,fame:-4},r:'你越不想那個畫面，那個畫面越清楚。第一句就抖了。',o:-1,int:86},
+    {l:'看著第一排一個人唱',e:{fame:10,craft:4},r:'唱完你才想起來剛剛在直播。',o:1,int:84}]},
+
+/* ---------- 第二幕：製作人 ---------- */
+{id:'p_bad',p:2,car:'producer',must:1,t:'第一個案子',
+ x:s=>'歌很爛，藝人很紅。他們要你「弄一下」。',
+ c:[{l:'救到底，做到自己能接受',e:{craft:8,fame:4,body:-6,money:2},r:'你熬了三個禮拜。成品很好，沒有人知道原本長什麼樣。',o:1,int:70},
+    {l:'照原樣交，反正會紅',e:{money:10,fame:6,craft:-5,bias:4},r:'紅了。你在 KTV 聽到的時候換了首歌。',o:0,int:64}]},
+{id:'p_credit',p:2,car:'producer',must:1,t:'掛名',
+ x:s=>'東西是你做的。公司說這次掛老闆的名字，下次一定給你。',
+ c:[{l:'答應',e:{money:12,craft:3,fame:-4,bias:-6},r:'那張後來得獎。上台的是三個你不太熟的人。',o:-1,int:82},
+    {l:'不答應，寧可退案',e:{fame:2,money:-10,craft:4},r:'案子沒了。半年後有人因為這件事找上你。',o:0,int:74}]},
+{id:'p_invisible',p:2,car:'producer',t:'訪問',
+ x:s=>'那首你做的歌紅了。整篇專訪從頭到尾沒有提到你。',
+ c:[{l:'在自己的社群補一句',e:{fame:5,craft:-1,bias:3},r:'有人留言「原來是你」，有人留言「蹭」。',o:-1,int:72},
+    {l:'什麼都不說',e:{craft:5,bias:-4},r:'你把那首的工程檔存進資料夾，命名是日期。',o:-1,int:76}]},
+{id:'p_change',p:2,car:'producer',t:'他要變成別人',
+ x:s=>'藝人拿了一首別人的歌來，說「我要做成這樣」。那不是他。',
+ c:[{l:'照他要的做',e:{money:10,fame:6,craft:-4},r:'成績不錯。他後來沒有再紅過。',o:0,int:60},
+    {l:'把他真正好的地方挖出來',e:{craft:9,fame:2,body:-5},r:'錄了六個晚上。第七晚他唱了一次，你們都知道就是那次。',o:1,int:88}]},
+{id:'p_trap2',p:2,car:'producer',trap:1,t:'混音',
+ x:s=>'交件前一晚。你知道自己的老毛病是加太多。',
+ c:[{l:'一直提醒自己：不要再加了、不要再加了',e:{yips:20,craft:-3},r:'你聽了四十遍。最後那版比第三版多了七軌。',o:-1,int:80},
+    {l:'交出第三版，關電腦',e:{craft:6,fame:4},r:'第三版就是對的。你其實一開始就知道。',o:1,int:78}]},
+
+/* ---------- 第二幕：詞曲作者 ---------- */
+{id:'w_sell',p:2,car:'writer',must:1,t:'賣斷還是抽成',
+ x:s=>'一次領十五萬，或是抽版稅——但可能一輩子都領不到那麼多。',
+ c:[{l:'賣斷，我現在就要',e:{money:15,craft:1,fame:2},r:'那首後來紅了七年。你算過一次那些年的版稅，之後不敢再算。',o:0,int:80},
+    {l:'抽版稅',e:{money:-6,craft:3,fame:1},r:'前三年每季入帳都不到四位數。',o:-1,int:68}]},
+{id:'w_brief',p:2,car:'writer',must:1,t:'命題',
+ x:s=>'需求單上寫：「25-35 女性、失戀但不悲傷、副歌要好記、三天內。」',
+ c:[{l:'照單交件',e:{money:10,fame:6,craft:-3},r:'一次過。他們說「合作愉快」，你把檔案關掉。',o:0,int:52},
+    {l:'寫你真的想寫的那版一起交',e:{craft:8,fame:1,body:-5},r:'他們選了第一版。第二版在你硬碟裡待了六年。',o:-1,int:78}]},
+{id:'w_mine',p:2,car:'writer',t:'那是誰的故事',
+ x:s=>'你寫的歌被唱紅了。歌手在訪問裡說：「這是我的親身經歷。」',
+ c:[{l:'不吭聲',e:{craft:4,bias:-5},r:'你把那段訪問看了三遍，然後去睡了。',o:-1,int:84},
+    {l:'發文說明那是我寫的',e:{fame:7,craft:-2},r:'吵了兩天。有人說你在消費，有人說你活該。',o:-1,int:80}]},
+{id:'w_own',p:2,car:'writer',t:'沒人要的那首',
+ x:s=>'你最好的那首歌，三年來沒有任何人要唱。',
+ c:[{l:'自己唱，自己發',e:{craft:6,fame:4,money:-8},r:'兩百多次播放。其中八十次是你自己。',o:-1,int:82},
+    {l:'收起來',e:{craft:2,bias:-5},r:'資料夾名稱是那年的年份。',o:-1,int:70}]},
+{id:'w_trap2',p:2,car:'writer',trap:1,t:'截稿',
+ x:s=>'剩十二小時。上一首太成功了，你最怕寫出一樣的東西。',
+ c:[{l:'一直告訴自己：不要重複、不要像上一首',e:{yips:20,craft:-3},r:'你刪掉七個開頭。交出去的是第八個，你自己都不喜歡。',o:-1,int:82},
+    {l:'先寫完再說，難聽也寫完',e:{craft:7,fame:3},r:'寫完之後改了三次。第三次的時候它變成別的東西了。',o:1,int:80}]},
+
+/* ---------- 第二幕：樂手 ---------- */
+{id:'x_simple',p:2,car:'session',must:1,t:'彈簡單一點',
+ x:s=>'你練了兩個禮拜的那段，製作人說：「可以再單純一點嗎。」',
+ c:[{l:'照做',e:{fame:6,money:6,craft:1},r:'成品確實比較好。你有一點難過，也知道他是對的。',o:0,int:58},
+    {l:'再試一次你的版本',e:{craft:6,fame:-2},r:'他們用了原本那版。那天之後你被叫回去的次數變少。',o:-1,int:70}]},
+{id:'x_clash',p:2,car:'session',must:1,t:'撞期',
+ x:s=>'同一天：一個很大的場，跟一個從你十八歲就在照顧你的人的小場。',
+ c:[{l:'去大場',e:{fame:12,money:10,craft:2},r:'那場很成功。小場那邊找了別人，沒有再約過你。',o:1,int:76},
+    {l:'去小場',e:{craft:4,fame:-3,money:-4},r:'台下四十個人。他在台上跟大家介紹你的名字。',o:0,int:84}]},
+{id:'x_name',p:2,car:'session',t:'老師',
+ x:s=>'現場所有人都叫你「老師」，但沒有人記得你的名字。',
+ c:[{l:'習慣就好',e:{craft:4,bias:-4},r:'你收拾器材的時候他們在拍團體照。',o:-1,int:74},
+    {l:'開始經營自己的東西',e:{fame:7,craft:-2,body:-4},r:'你多了一件事要做，通告沒有變少。',o:0,int:62}]},
+{id:'x_trap2',p:2,car:'session',trap:1,t:'獨奏',
+ x:s=>'那八小節。上次錄的時候你在同一個地方吃了螺絲，現場有五個人在看。',
+ c:[{l:'一直想著：不要再錯同一個地方',e:{yips:20,body:-4},r:'錄了十一次。第十一次過了，但你知道那不是最好的一次。',o:-1,int:84},
+    {l:'把它當成第一次彈',e:{craft:6,fame:5},r:'一次過。控制室有人比大拇指。',o:1,int:82}]},
+{id:'x_own',p:2,car:'session',t:'自己的東西',
+ x:s=>'有人問你：「你什麼時候要做自己的作品？」你已經被問第九次了。',
+ c:[{l:'做，把接案減半',e:{craft:8,money:-12,fame:3},r:'你做了一張。技術好得驚人，沒什麼人聽。',o:0,int:80},
+    {l:'不做，我就是喜歡彈',e:{craft:5,money:8},r:'你講得很輕鬆。回家路上想了一路。',o:0,int:70}]},
+
+/* ---------- 第二幕：老師 ---------- */
+{id:'t_grade',p:2,car:'teacher',must:1,t:'家長',
+ x:s=>'「老師，我們只要他檢定過，其他的以後再說。」',
+ c:[{l:'照課綱衝檢定',e:{money:12,fame:6,craft:-4},r:'全班都過了。有一個小孩過完之後再也沒碰過樂器。',o:0,int:66},
+    {l:'先讓他喜歡',e:{craft:6,student:8,money:-4},r:'有一個學生檢定沒過，但他現在每天自己彈。',o:1,int:80}]},
+{id:'t_still',p:2,car:'teacher',must:1,t:'你自己呢',
+ x:s=>'學生問：「老師你自己還有在做音樂嗎？」你上一次寫東西是兩年前。',
+ c:[{l:'「有啊，只是比較低調。」',e:{bias:6,craft:-2},r:'你回家打開電腦，坐了四十分鐘，關掉。',o:-1,int:80},
+    {l:'那天晚上開始寫',e:{craft:7,body:-4,money:-3},r:'寫得很爛。但你寫了。',o:1,int:78}]},
+{id:'t_why',p:2,car:'teacher',t:'為什麼沒紅',
+ x:s=>'一個學生很直白：「老師你這麼厲害，為什麼沒有紅？」',
+ c:[{l:'「運氣吧。」',e:{optimism:6,bias:3},r:'他點點頭。你講完自己也想了一下。',o:0,int:76},
+    {l:'「因為我不夠好。」',e:{optimism:-10,craft:3},r:'他愣住了。那節課後面上得很安靜。',o:0,int:82}]},
+{id:'t_trap2',p:2,car:'teacher',trap:1,t:'示範',
+ x:s=>'發表會，你要示範。台下坐著所有家長，還有三個同業。',
+ c:[{l:'一直想著：絕對不能在學生面前彈錯',e:{yips:20,fame:-4},r:'你彈錯了兩個地方。學生比你還緊張。',o:-1,int:82},
+    {l:'當成平常上課那樣',e:{craft:5,fame:6,student:5},r:'很順。有個學生後來說，那天他決定要繼續學。',o:1,int:84}]},
+{id:'t_scale',p:2,car:'teacher',t:'開班',
+ x:s=>'有人要你把課變成大班制，收入翻三倍。',
+ c:[{l:'開',e:{money:16,fame:8,craft:-4,body:-6},r:'一週帶四十個人。你記不太住誰是誰。',o:0,int:60},
+    {l:'維持一對一',e:{money:2,student:6,craft:3},r:'你記得每一個人在哪裡卡住。',o:0,int:70}]},
+
+/* ---------- 第二幕：共用 ---------- */
+{id:'algo',p:2,t:'演算法',
+ x:s=>'兩年前那個你最不喜歡的東西，突然被大量使用。',
+ c:[{l:'趕快再做一個像那樣的',e:{fame:17,craft:-6,bias:10},r:'數字漲得比你做東西快。你開始拿數字當鏡子。',o:1,int:80},
+    {l:'不理它',e:{fame:4,craft:6,bias:-3},r:'三週後熱度退了。你的東西還在原地，好了一點。',o:0,int:48}]},
+{id:'rival2',p:2,must:1,t:'同期',
+ x:s=>`${s.rivalName}站上了你一直想去的那個位置。`,
+ c:[{l:'去看',e:{craft:4,bias:-6,fame:1},r:'你聽出他哪裡比你好，也聽出哪裡沒有。',o:0,int:70},
+    {l:'那天在工作',e:{craft:6,bias:-2},r:'你做了六個小時，一句話都沒說。',o:0,int:58}]},
+{id:'body2',p:2,t:'身體',
+ x:s=>({singer:'檢查出聲帶有東西。',producer:'左耳出現一個持續的高頻。',writer:'你已經連續四個月寫不出任何東西。',
+  session:'手腕在第三首之後開始發麻。',teacher:'你發現自己上課的時候在放空。'})[s.career],
+ c:[{l:'停下來處理',e:{body:20,fame:-8,money:-6},r:'你停了三個月。世界沒有等你，但你回來了。',o:-1,int:84},
+    {l:'撐過這一年的行程',e:{fame:8,body:-14,money:8},r:'你撐完了。之後每次開工都要比別人多花二十分鐘。',o:-1,int:84}]},
+
+/* ---------- 第三幕：歌手 ---------- */
+{id:'s_key',p:3,car:'singer',must:1,t:'降半個 key',
+ x:s=>'那首成名曲的最後一句，你已經連續三場沒上去了。',
+ c:[{l:'降 key，好好唱完',e:{craft:5,body:6,fame:-3},r:'沒有人抱怨。有一個人留言：「以前不是這樣唱的。」',o:0,int:80},
+    {l:'硬上原 key',e:{fame:4,body:-12,yips:10},r:'上去了一半。那個片段隔天在網路上。',o:-1,int:88}]},
+{id:'s_nost',p:3,car:'singer',t:'懷舊金曲',
+ x:s=>'節目邀你唱那首十年前的歌，標題寫「回來了」。',
+ c:[{l:'去',e:{fame:10,money:8,bias:4},r:'現場大合唱。你唱的時候在想這十年做過的其他事。',o:1,int:84},
+    {l:'除非能唱新歌',e:{fame:-6,craft:5},r:'他們找了別人唱你的歌，唱得還不錯。',o:-1,int:78}]},
+
+/* ---------- 第三幕：製作人 ---------- */
+{id:'p_boss',p:3,car:'producer',must:1,t:'總監',
+ x:s=>'公司要你管十五個人，年薪很好看，但你會很久沒有自己動手。',
+ c:[{l:'接',e:{money:22,fame:10,craft:-8},r:'你變成很會開會的人。三年後你打開 DAW，手有點生。',o:1,int:80},
+    {l:'不接，我要繼續做',e:{craft:8,money:-6},r:'你還在同一間錄音室。椅子換過兩張。',o:0,int:76}]},
+{id:'p_old',p:3,car:'producer',t:'老派',
+ x:s=>'一個二十四歲的新人聽完你的參考版本說：「這個聲音有點老派耶。」',
+ c:[{l:'照他的方向重做',e:{fame:8,craft:-3,bias:-5},r:'你花了兩週學一套新的做法。做完覺得那不太像你。',o:-1,int:78},
+    {l:'堅持這樣是對的',e:{craft:5,fame:-5,bias:5},r:'那張賣得不好。你到現在還是覺得那版比較好。',o:-1,int:80}]},
+
+/* ---------- 第三幕：詞曲 ---------- */
+{id:'w_late',p:3,car:'writer',must:1,t:'十年後',
+ x:s=>'你二十六歲寫的那首，突然被一部劇用了。它現在到處都是。',
+ c:[{l:'順勢再寫一批',e:{money:18,fame:12,craft:-4},r:'你寫得很快。沒有一首像那首。',o:1,int:82},
+    {l:'不動，讓它自己走',e:{money:12,craft:5,bias:-3},r:'你只做了一件事：把當年那本筆記本找出來。',o:1,int:86}]},
+{id:'w_ai',p:3,car:'writer',t:'新的東西',
+ x:s=>'公司說：「初稿可以用生成的，你負責改。」報酬是原本的四成。',
+ c:[{l:'接受，反正改得動',e:{money:12,craft:-6,fame:3},r:'你改得很好。你也開始分不清哪句是你的。',o:0,int:76},
+    {l:'不接這種案',e:{money:-10,craft:6},r:'案子少了三分之二。剩下的都是指名要你的。',o:0,int:80}]},
+
+/* ---------- 第三幕：樂手 ---------- */
+{id:'x_hand',p:3,car:'session',must:1,t:'手',
+ x:s=>'醫生說是長期累積的。可以開刀，術後恢復程度看運氣。',
+ c:[{l:'開刀，停半年',e:{body:22,fame:-8,money:-8},r:'半年後回來，通告表從頭開始排。',o:-1,int:86},
+    {l:'吃藥撐著',e:{fame:6,body:-14},r:'你發明了很多繞過去的指法。有些人說你風格變了。',o:-1,int:84}]},
+{id:'x_cheap',p:3,car:'session',t:'年輕人',
+ x:s=>'有個二十三歲的，彈得沒你好，但半價，而且很好約。',
+ c:[{l:'降價搶回來',e:{money:4,fame:6,craft:-2,bias:-6},r:'你接回了那些案子。每一場都在想這件事。',o:-1,int:78},
+    {l:'不降，等指名你的人',e:{money:-8,craft:6,fame:-4},r:'案子少了一半。剩下那一半，你彈得比以前好。',o:0,int:80}]},
+
+/* ---------- 第三幕：老師 ---------- */
+{id:'t_star',p:3,car:'teacher',must:1,t:'學生',
+ x:s=>'你教了六年的那個學生入圍了。他今年二十一歲。',
+ c:[{l:'去現場，坐在台下',e:{student:20,craft:3,bias:-6},r:'他上台謝了很多人。第三個是你。',o:1,int:94},
+    {l:'那天你有課',e:{money:3,student:8,bias:-3},r:'你在教室看直播。下課鐘響的時候剛好輪到他。',o:0,int:88}]},
+{id:'t_quit',p:3,car:'teacher',must:1,t:'他想放棄',
+ x:s=>'一個學生比賽失常，跟你說他不想學了。他在等你怎麼說。',
+ c:[{l:'「是你不夠努力。」',e:{craft:2,student:-6},r:'他點頭，然後就沒有再來過了。',o:0,int:86,taught:'internal-stable'},
+    {l:'「那天狀況不好而已。」',e:{student:6},r:'他半信半疑，但下週還是來了。',o:0,int:84,taught:'external'},
+    {l:'「這次這樣，下次不一定。」',e:{student:10,craft:3},r:'他問：「老師你以前也這樣嗎？」你說對。',o:1,int:90,taught:'specific'}]},
+
+/* ---------- 第三幕：共用 ---------- */
+{id:'rent3',p:3,must:1,t:'現實',
+ x:s=>'家裡問：「這樣還要多久？」這次語氣沒有生氣，比生氣難回答。',
+ c:[{l:'找一份穩定的，晚上還是做',e:{money:18,craft:-4,fame:-4},r:'你變成一個下班後很累的人。東西還是有在做，做得慢。',o:0,int:64},
+    {l:'再撐兩年',e:{money:-12,craft:5},r:'你說得很堅定。掛掉電話後坐了很久。',o:0,int:76}]},
+{id:'rivalbig',p:3,must:1,cmp:1,t:'那個消息',
+ x:s=>`${s.rivalName}宣布年底的場館。你看到的時候正在洗碗。`,
+ c:[{l:'留言恭喜，然後關掉',e:{bias:-8},r:'你打了三次字才送出去。是真心的，也不完全是。',o:0,int:80},
+    {l:'從今天起不再看他的消息',e:{bias:5,craft:4},r:'世界安靜了。你也少了一個逼自己的理由。',o:0,int:78,stopcmp:1}]},
+{id:'trap3',p:3,trap:1,t:'又是那個地方',
+ x:s=>'同一種場面，你做了十五年沒失手。今天有你很在意的人在。',
+ c:[{l:'告訴自己這次千萬不能砸',e:{yips:22,fame:-4},r:'十五年沒失手的地方，今天失手了。',o:-1,int:92},
+    {l:'跟平常一樣，什麼都不想',e:{fame:7,craft:3},r:'跟平常一樣過去了。你有點想哭，不知道為什麼。',o:1,int:88}]},
+{id:'seen',p:3,t:'有人認出',
+ x:s=>({singer:'計程車司機看了後照鏡三次：「你是不是那個誰？」',
+  producer:'一個陌生人說：「那張是你做的對吧？我聽了六年。」',
+  writer:'有人在你面前哼你寫的歌，他不知道是你寫的。',
+  session:'有人拿出一張唱片：「這裡面的吉他是你彈的吧？我聽得出來。」',
+  teacher:'一個三十歲的人在路上叫住你：「老師，你還記得我嗎？」'})[s.career],
+ c:[{l:'「對，是我。」',e:{bias:8,fame:1},r:'他講了很多。你走開的時候腳步很輕。',o:1,int:94},
+    {l:'「認錯了吧。」',e:{bias:-3,craft:2},r:'你在路口站了一下才走。',o:0,int:74}]},
+{id:'young',p:3,t:'後輩',
+ x:s=>'有個二十歲的說：「我是聽你的東西長大的。」他今年入圍了。',
+ c:[{l:'幫他一把',e:{craft:6,fame:3,student:10,bias:-3},r:'他得獎了，謝了你。鏡頭沒帶到你。',o:1,int:88},
+    {l:'笑一笑就過去',e:{craft:1},r:'回家的路上你一直在想「長大」這兩個字。',o:0,int:70}]},
+{id:'last',p:3,must:1,t:'收尾',
+ x:s=>({singer:'你自己提的最後一場。票開賣那天你一直在重新整理。',
+  producer:'最後一張的母帶送出去了。你在錄音室坐到天亮。',
+  writer:'你把所有沒發表的稿子整理成一個檔案夾。',
+  session:'最後一場錄音，年輕的工程師問你要不要留一張合照。',
+  teacher:'最後一屆的發表會，場地是你租了十九年的那間。'})[s.career],
+ c:[{l:'就這樣，收',e:{fame:5},r:'決定之後，你反而開始每天練。',o:0,int:95,end:1},
+    {l:'再等等，還沒到時候',e:{craft:2,money:-8,body:-4},r:'又過了幾年。那幾年的事你後來很少提。',o:-1,int:60}]}
+];
+
+const FILLER=[{t:'沒有案子的一年',x:'你把整年拿去練基本功。沒有人知道。'},
+ {t:'夏天',x:'工作室、便當、回家。重複三個月。'},
+ {t:'空白',x:'你翻到十七歲做的那個檔案，聽了三十秒就關掉。'}];
+
+const ATTRIB=[{l:'是我不夠好。',k:'internal-stable',opt:-14,craft:2},
+ {l:'今天狀況不對而已。',k:'external',opt:11,craft:0},
+ {l:'這種場面我永遠都不行。',k:'global',opt:-22,craft:0},
+ {l:'這次這樣，下次不一定。',k:'specific',opt:7,craft:1}];
+
+/* ===== 轉職 ===== */
+const SWITCH={
+ singer:[['producer','退到控台後面，做別人的歌'],['teacher','開一間教室']],
+ producer:[['singer','自己站到前面試試看'],['teacher','把會的東西交出去']],
+ writer:[['singer','沒人要唱，那我自己唱'],['producer','從寫歌到把整首做完']],
+ session:[['producer','從彈的人變成決定怎麼彈的人'],['teacher','開始收學生']],
+ teacher:[['producer','幫學生做第一張'],['writer','把這些年寫的東西整理出來']]
+};
+
+/* ===== 引擎 ===== */
+function applyE(s,e){
+  const d={};
+  for(const k in e){let v=e[k];
+    if(k==='craft'&&v>0){v*=(1-s.craft/115);v*=(1-s.yips/300);if(s.body<40)v*=0.6}
+    s[k]=(s[k]||0)+v;d[k]=v}
+  s.craft=clamp(s.craft,1,100);s.fame=clamp(s.fame,0,100);s.body=clamp(s.body,0,100);
+  s.yips=clamp(s.yips,0,100);s.bias=clamp(s.bias,-38,38);s.optimism=clamp(s.optimism,0,100);
+  s.student=clamp(s.student||0,0,200);
+  return d;
+}
+const phaseOf=a=>a<=21?1:a<=30?2:3;
+function nextEvent(s){
+  const p=phaseOf(s.age);
+  const pool=EV.filter(e=>e.p===p&&!s.used.has(e.id)&&(!e.car||e.car===s.career)&&(!e.cmp||s.comparing));
+  const must=pool.filter(e=>e.must);
+  if(must.length&&(rnd()<0.7||pool.length===must.length))return pick(must);
+  return pool.length?pick(pool):null;
+}
+
+const app=document.getElementById('app');
+function titleScreen(){
+  let career='singer',vt='清亮';
+  app.innerHTML=`<div class="title-screen">
+    <h1><span class="en">E C H O</span>回音</h1>
+    <p class="tagline">音樂人生模擬器。五種職業、可以中途轉行、十五種結局。畫面上會有很多數字，但沒有一個數字是真的。</p>
+    <div class="field"><label>名字</label><input id="nm" type="text" placeholder="例：林向晚" maxlength="10"></div>
+    <div class="field"><label>你想做的</label><div class="careers" id="cg">${Object.entries(CAREERS).map(([k,v])=>
+      `<button class="career${k==='singer'?' sel':''}" data-v="${k}"><b>${v.n}</b><small>${v.d}　·　你會一直盯著「${v.fameL}」這個數字，一直燒掉你的「${v.bodyL}」</small></button>`).join('')}</div></div>
+    <div class="field"><label>天生的東西</label><div class="grid4" id="vg">${Object.keys(VOICES).map(k=>
+      `<button class="role${k==='清亮'?' sel':''}" data-v="${k}">${k}</button>`).join('')}</div></div>
+    <div class="field"><label>世界種子</label><div class="seedline"><input id="sd" type="text" value="${(new URLSearchParams(location.search).get('seed')||newSeed())}"><button class="reroll" id="rr">換一個</button></div>
+      <p class="muted" style="margin-top:8px">相同種子＋相同選擇＝相同人生。</p></div>
+    <button class="primary" id="go">開始 ▸ 十六歲</button>
+    <p class="footer">機制：Seligman 歸因風格・Wegner 白熊效應・Kahneman 峰終定律・社會比較理論</p></div>`;
+  document.getElementById('cg').onclick=e=>{const b=e.target.closest('.career');if(!b)return;
+    document.querySelectorAll('#cg .career').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');career=b.dataset.v};
+  document.getElementById('vg').onclick=e=>{const b=e.target.closest('.role');if(!b)return;
+    document.querySelectorAll('#vg .role').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');vt=b.dataset.v};
+  document.getElementById('rr').onclick=()=>document.getElementById('sd').value=newSeed();
+  document.getElementById('go').onclick=()=>{
+    const sd=(document.getElementById('sd').value||newSeed()).trim();
+    try{history.replaceState(null,'','?seed='+encodeURIComponent(sd))}catch(e){}
+    S=newGame((document.getElementById('nm').value||'林向晚').trim(),career,vt,sd);
+    turn()};
+}
+
+function hud(){const s=S,c=C(s);return `<div class="hud"><div class="hud-row">
+  <div class="stat"><span class="k">AGE</span><span class="v">${s.age}</span></div>
+  <div class="stat"><span class="k">${c.craftL}</span><span class="v">${shown(s)}</span></div>
+  <div class="stat"><span class="k">${c.fameL}</span><span class="v">${Math.round(s.fame)}</span></div>
+  <div class="stat"><span class="k">${c.bodyL}</span><span class="v${s.body<32?' warn':''}">${Math.round(s.body)}</span></div>
+  <div class="stat"><span class="k">錢(萬)</span><span class="v${s.money<0?' warn':''}">${Math.round(s.money)}</span></div>
+  </div><div class="selfnote">※ ${c.craftL}為自我評估值</div></div>`}
+function render(i){app.innerHTML=hud()+`<div class="scene">${i}</div>`;window.scrollTo(0,0)}
+
+function turn(){
+  const s=S;
+  if(s.body<=12)return ending('body');
+  if(s.money<-55)return ending('broke');
+  if(s.age>=42)return ending('auto');
+  if((s.age===27||s.age===33)&&!s.used.has('sw'+s.age))return switchScreen();
+  const ev=nextEvent(s);
+  if(!ev){const f=pick(FILLER);
+    render(`<div class="age-mark">${s.age} 歲 · ${s.year}</div><h2>${f.t}</h2><p class="body-text">${f.x}</p>
+      <div class="opts"><button class="opt" id="k">繼續 ▸</button></div>`);
+    document.getElementById('k').onclick=()=>{advance();turn()};return}
+  s.used.add(ev.id);
+  const x=typeof ev.x==='function'?ev.x(s):ev.x;
+  render(`<div class="age-mark">${s.age} 歲 · ${s.year}</div><h2>${ev.t}</h2><p class="body-text">${x}</p>
+    <div class="opts">${ev.c.map((c,i)=>`<button class="opt" data-i="${i}">${c.l}</button>`).join('')}</div>`);
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>choose(ev,ev.c[+b.dataset.i]));
+}
+
+function switchScreen(){
+  const s=S;s.used.add('sw'+s.age);
+  const opts=SWITCH[s.career];
+  render(`<div class="age-mark">${s.age} 歲 · ${s.year}</div><h2>岔路</h2>
+    <p class="body-text">你${s.age===27?'在這行第十一年':'快三十五了'}。有些門現在還開著，再過幾年就不一定。</p>
+    <div class="opts">
+      <button class="opt" id="stay">留在原地，我還沒做完</button>
+      ${opts.map((o,i)=>`<button class="opt switch" data-s="${i}">轉做${CAREERS[o[0]].n}——${o[1]}</button>`).join('')}
+    </div>`);
+  document.getElementById('stay').onclick=()=>{s.craft+=3;advance();turn()};
+  document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{
+    const to=opts[+b.dataset.s][0];
+    s.career=to;s.path.push({age:s.age,c:to});
+    s.fame=Math.round(s.fame*0.68);s.craft=Math.round(s.craft*0.88);s.body=clamp(s.body+12,0,100);s.bias*=0.6;
+    const shared=new Set(EV.filter(e=>!e.car).map(e=>e.id));
+    s.used=new Set([...s.used].filter(k=>k.startsWith('sw')||shared.has(k)));
+    s.log.push({age:s.age,t:'轉行',line:`你把自己拆掉一半，換到另一個位置。名片上的字換了。`,int:80,o:0,aud:null});
+    advance();turn()});
+}
+
+function choose(ev,c){
+  const s=S;
+  const d=applyE(s,c.e||{});
+  if(ev.trap&&c.e&&c.e.yips)s.trap++;
+  if(c.e&&c.e.body<-8)s.pushed++;
+  if(c.taught)s.taught=c.taught;
+  if(c.stopcmp){s.comparing=false;s.stopCompareAge=s.age}
+  if(c.e&&c.e.fame>0){s.works++;s.worksSum+=reach(s);s.peakWork=Math.max(s.peakWork,reach(s))}
+  const r=typeof c.r==='function'?c.r(s):c.r;
+  if(ev.id==='rival2'||ev.id==='rivalbig')s.lastRival=s.age;
+  s.log.push({age:s.age,t:ev.t,line:r,int:c.int||30,o:c.o,unit:C(s).unit,aud:(c.e&&c.e.fame>=8&&c.o>=0)?reach(s):null});
+  if(d.fame)s.bias+=d.fame*0.35;
+  if(c.o>0)s.bias+=3.4+(s.optimism-50)/18;else if(c.o<0)s.bias-=3.6-(s.optimism-50)/16;
+  s.bias*=0.975;
+  const cc=C(s),nm={craft:cc.craftL,fame:cc.fameL,body:cc.bodyL,money:'錢',student:'學生'};
+  const dl=Object.entries(d).filter(([k,v])=>nm[k]&&Math.abs(v)>0.4)
+    .map(([k,v])=>`<span class="${v>0?'up':'down'}">${nm[k]} ${v>0?'+':''}${Math.round(v)}</span>`).join('');
+  let h=`<div class="age-mark">${s.age} 歲 · ${s.year}</div><h2>${ev.t}</h2>
+    <div class="outcome${c.o<0?' bad':''}">${r}${dl?`<div class="deltas">${dl}</div>`:''}</div>`;
+  if(c.end){render(h+`<div class="opts"><button class="opt" id="k">走過去 ▸</button></div>`);
+    document.getElementById('k').onclick=()=>ending('chosen');return}
+  if(c.o<0&&s.attrib.length<5){
+    h+=`<p class="muted" style="margin-top:18px">你怎麼跟自己解釋這件事？</p>
+      <div class="opts">${ATTRIB.map((a,i)=>`<button class="opt" data-a="${i}">${a.l}</button>`).join('')}</div>`;
+    render(h);
+    document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=ATTRIB[+b.dataset.a];
+      s.attrib.push(a.k);s.optimism=clamp(s.optimism+a.opt,0,100);s.craft+=a.craft;s.bias+=a.opt>0?2.2:-1.8;afterTurn()});
+    return}
+  render(h+`<div class="opts"><button class="opt" id="k">下一年 ▸</button></div>`);
+  document.getElementById('k').onclick=afterTurn;
+}
+
+function afterTurn(){
+  const s=S;
+  s.rivalFame=clamp(s.rivalFame+rnd()*5+(rnd()<0.12?12:0),0,100);
+  if(s.comparing&&s.age%4===0&&s.age>20&&s.age<38&&s.age-(s.lastRival||-9)>=2){
+    const gap=Math.round(s.fame-s.rivalFame);
+    render(`<div class="age-mark">${s.age} 歲</div><h2>你又點進去看了</h2>
+      <div class="rival"><div class="eyebrow">${s.rivalName}</div><div class="n">${Math.round(s.rivalFame)}</div>
+      <div class="muted" style="margin-top:6px">你：${Math.round(s.fame)}　${gap>=0?'你在前面':'差距 '+Math.abs(gap)}</div></div>
+      <p class="muted">你的滿意度不是算你有多少，是算你比他少多少。</p>
+      <div class="opts"><button class="opt" id="a">關掉，繼續做自己的事</button>
+      <button class="opt" id="b">不再追蹤他（少一個比較對象，也少一個動力）</button></div>`);
+    document.getElementById('a').onclick=()=>{s.bias-=gap<0?4:-1;advance();turn()};
+    document.getElementById('b').onclick=()=>{s.comparing=false;s.stopCompareAge=s.age;s.bias+=3;advance();turn()};
+    return}
+  advance();turn();
+}
+
+function advance(){
+  const s=S;
+  s.history.push({age:s.age,real:Math.round(s.craft),self:shown(s),fame:Math.round(s.fame)});
+  s.age++;s.year++;
+  if(s.age>33){s.craft-=0.9+(s.age-33)*0.12;s.body-=1.1}
+  if(s.age>28)s.fame-=0.6;
+  s.body+=0.2-(0.6+s.fame/45);   // 越忙磨越快，讓第四格永遠是活的
+  s.craft+=(1-s.yips/140)*(s.body<40?0.4:0.85);
+  s.bias*=0.985;
+  s.money+=Math.min(5.5,s.fame/11)-2.6+C(s).inc;
+  s.craft=clamp(s.craft,1,100);s.fame=clamp(s.fame,0,100);s.body=clamp(s.body,0,100);
+}
+
+/* ===== 十一種結局 ===== */
+function resolveEnding(s,how){
+  const c=s.career,multi=s.path.length>2;
+  if(how==='broke')return{k:'撐不住了',s:'錢先到期，不是你。',
+    l:'你把器材賣掉的那天，買家問你「你以前是做什麼的」。'};
+  if(how==='body')return{k:({singer:'聲音沒了',producer:'耳朵沒了',writer:'寫不出來了',session:'手沒了',teacher:'燒完了'})[c],
+    s:'你把它整個燒掉了。每一次當下都很划算。',
+    l:'最後那次是很小的事。小到你事後說起來，別人都不太懂。'};
+  let r,low=false;
+  if(c==='singer'){
+    if(s.fame>55)r={k:'最後一場',s:'你走到了你想去的位置，然後自己走下來。',l:'安可完，你站在台上看了很久才走。'};
+    else if(s.fame>24)r={k:'一首歌',s:'你有一首大家都會唱的歌，然後就沒有了。',l:'每次自我介紹，對方都會說出那首歌的名字，然後停住。'};
+    else{low=true;r={k:'沒有被記住的那個聲音',s:'你唱得比很多紅的人好。這件事沒有任何用處，但它是真的。',l:'某年某個小場子，有七個人是專程來的。你記得那七張臉。'}}
+  }else if(c==='producer'){
+    if(s.fame>48)r={k:'幕後',s:'你的名字在小字裡，但內行的人都知道。',l:'頒獎典禮上有人謝了你。鏡頭找了你三秒，你剛好在低頭。'};
+    else{low=true;r={k:'工程檔',s:'你做過的東西比你有名很多。',l:'那些資料夾的名字都是日期。你自己還記得每一個裡面有什麼。'}}
+  }else if(c==='writer'){
+    if(s.craft>58&&s.fame<48)r={k:'歌比你活得久',s:'很多人會唱那首，沒什麼人知道是你。',l:'有一天你在早餐店聽到它，老闆娘跟著哼，哼錯了一個字。'};
+    else if(s.fame>48)r={k:'有名字的作者',s:'他們開始在歌名後面加上你。',l:'新人來找你的時候會先說「我是聽你寫的歌長大的」。'};
+    else{low=true;r={k:'抽屜',s:'你寫了很多，交出去的是少數。',l:'那個資料夾一直在。你每年會打開一次，改一個字。'}}
+  }else if(c==='session'){
+    if(s.craft>60)r={k:'一直有工作的那個人',s:'沒有人為你買票，但每個人都想約你。',l:'你的名字在 credit 的第四行。四十年來，一直在。'};
+    else{low=true;r={k:'第四行',s:'你在很多張唱片裡，沒有一張是你的。',l:'有次你女兒問你是做什麼的。你想了三秒才回答。'}}
+  }else{
+    if(s.student>38)r={k:'他們的老師',s:'你的名字在別人的謝辭裡。',l:'你這輩子最好的作品會走路，而且不姓你的姓。'};
+    else{low=true;r={k:'教過的那些人',s:'你沒有紅，但你在很多人的第一年裡。',l:'路上被叫住的機率，比你當年上台的次數還高。'}}
+  }
+  if(multi&&low)return{k:'換過位置的人',s:'你不是放棄，你是換了一個離音樂比較近的位子。',
+    l:'年輕的時候你以為那是退讓。現在你知道那只是換一種待著的方法。'};
+  return r;
+}
+
+function ending(how){
+  const s=S;s.over=true;
+  s.history.push({age:s.age,real:Math.round(s.craft),self:shown(s),fame:Math.round(s.fame)});
+  document.body.classList.add('lights-on');
+  const c=C(s),E=resolveEnding(s,how);
+  const peakReal=s.history.reduce((a,b)=>b.real>a.real?b:a,s.history[0]);
+  const maxGap=s.history.reduce((a,b)=>Math.abs(b.self-b.real)>Math.abs(a.self-a.real)?b:a,s.history[0]);
+  const avg=s.works?Math.round(s.worksSum/s.works):0;
+  const end=s.log[s.log.length-1]||{line:'什麼都沒發生。',age:s.age,aud:null};
+  const before=s.log.slice(0,-1);
+  const peak=before.length?before.reduce((a,b)=>b.int>a.int?b:a):end;
+  const cnt={};s.attrib.forEach(k=>cnt[k]=(cnt[k]||0)+1);
+  const dom=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+  const AN={'internal-stable':'把失敗歸給自己、而且覺得改不了','external':'把失敗歸給環境',
+    'global':'把一次失敗放大成「我永遠不行」','specific':'把失敗限縮在這一次'};
+  const an=AN[dom?dom[0]:'specific'];
+  const pathStr=s.path.map(p=>`${p.age}歲 ${CAREERS[p.c].n}`).join(' → ');
+  const taughtLine=s.taught?`<li><b>你教別人的解釋方式：</b>你自己最常${an}，但你叫學生${AN[s.taught]}。${s.taught===dom?.[0]?'你把自己那一套原封不動傳下去了。':'你給了他一個你自己沒用過的版本。'}</li>`:'';
+
+  app.innerHTML=`<div class="ending">
+    <div class="eyebrow">${s.year}</div>
+    <div class="endtitle">${E.k}</div>
+    <p class="muted">${E.s}</p>
+    <div class="path">${pathStr}　·　${s.age}歲　·　${s.name}</div>
+    <div class="doc ledger"><div class="stamp">DOCUMENT 1 — 記錄簿・實際數字</div>
+      <div class="row"><span>${c.metric}</span><span>${s.works}</span></div>
+      <div class="row"><span>平均觸及</span><span>${avg} ${c.unit}</span></div>
+      <div class="row"><span>最好的一次</span><span>${s.peakWork} ${c.unit}</span></div>
+      <div class="row"><span>真實${c.craftL}最高點</span><span>${peakReal.age} 歲（${peakReal.real}）</span></div>
+      <div class="row"><span>那一年你給自己打</span><span>${peakReal.self}</span></div>
+      <div class="row"><span>${c.bodyL}剩下</span><span>${Math.round(s.body)}／100</span></div>
+      ${s.student>0?`<div class="row"><span>學生的成就</span><span>${Math.round(s.student)}</span></div>`:''}
+      <div class="row"><span>存款</span><span>${Math.round(s.money)} 萬</span></div></div>
+    <div class="doc memoir"><div class="stamp">DOCUMENT 2 — 回憶錄・由峰終定律生成</div>
+      <h3>後來別人問起，你會這樣講：</h3>
+      <p>「${peak.line}」——那是 ${peak.age} 歲。${peak.aud?`你記得那次大概${felt(s,peak.aud)}${peak.unit||c.unit}。`:''}</p>
+      <p>然後就到最後了。「${end.line}」</p>
+      <p style="font-family:'Noto Serif TC',serif">${E.l}</p>
+      <p style="color:#7a6f62;font-size:.86rem;font-family:'Noto Sans TC',sans-serif;line-height:1.7">
+      中間那 ${Math.max(0,s.log.length-2)} 件事沒有出現在這裡。不是你忘了，是記憶本來就只留最高的那一點和最後的那一點。</p></div>
+    ${chart(s.history,c)}
+    <div class="gap"><h3>覺察報告</h3><ul>
+      <li><b>自評與真實的最大落差</b>在 ${maxGap.age} 歲：你以為自己 ${maxGap.self}，實際上 ${maxGap.real}。${maxGap.self>maxGap.real?'你高估了自己，然後接下了扛不住的東西。':'你低估了自己，在你最強的時候想放棄。'}</li>
+      <li><b>歸因風格：</b>你最常${an}。${s.optimism>60?'復原很快，代價是你對自己的判斷越來越不準。':s.optimism<40?'你看自己看得很清楚，代價是每次低潮都特別長。':'你在兩者之間搖擺。'}</li>
+      ${taughtLine}
+      <li><b>白熊陷阱：</b>踩了 ${s.trap} 次。越告訴自己「不要出錯」，負責監控那個念頭的大腦就一直把它叫出來。</li>
+      <li><b>${c.bodyL}：</b>你硬撐了 ${s.pushed} 次。每一次當下都很划算。</li>
+      <li><b>社會比較：</b>${s.stopCompareAge?`你在 ${s.stopCompareAge} 歲停止追蹤${s.rivalName}。之後自我評價穩定了，動力也少了一塊。`:`你比較了一輩子。${s.rivalName}最後是 ${Math.round(s.rivalFame)}，你是 ${Math.round(s.fame)}。`}</li>
+    </ul></div>
+    <p class="muted" style="text-align:center">世界種子 <b class="mono">${s.seed}</b><br>
+      <button id="copySeed" style="margin-top:8px;padding:8px 14px;background:none;border:1px solid #c9bda6;color:#6d6259;border-radius:2px;font-family:'Space Mono',monospace;font-size:.72rem;cursor:pointer">複製連結給朋友</button><br>
+      <span style="font-size:.8rem">同一顆種子，數據會一樣，回憶錄不會。</span></p>
+    <button class="primary" id="again" style="background:var(--ink);color:var(--paper)">再活一次</button>
+    <p class="footer">回音 ECHO — 概念原型</p></div>`;
+  document.getElementById('again').onclick=()=>{document.body.classList.remove('lights-on');titleScreen()};
+  const cs=document.getElementById('copySeed');
+  if(cs)cs.onclick=()=>{const u=location.origin+location.pathname+'?seed='+encodeURIComponent(s.seed);
+    (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject())
+      .then(()=>cs.textContent='已複製 ✓').catch(()=>cs.textContent=s.seed)};
+  window.scrollTo(0,0);
+}
+
+function chart(h,c){
+  const W=520,H=190,pl=30,pr=10,pt=16,pb=24;
+  const x=i=>pl+(W-pl-pr)*(i/(h.length-1||1));
+  const y=v=>pt+(H-pt-pb)*(1-v/100);
+  const line=(k,col)=>`<polyline fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" points="${h.map((p,i)=>x(i)+','+y(p[k])).join(' ')}"/>`;
+  const ticks=h.map((p,i)=>({p,i})).filter(o=>o.i%5===0||o.i===h.length-1)
+    .map(o=>`<text class="lbl" fill="#9a8f7e" x="${x(o.i)}" y="${H-6}" text-anchor="middle">${o.p.age}</text>`).join('');
+  return `<div class="doc" style="padding:18px 14px">
+    <div class="stamp" style="padding-left:8px">DOCUMENT 3 — 你以為的你 ／ 你</div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="自評與真實對照圖">
+      <line x1="${pl}" y1="${y(0)}" x2="${W-pr}" y2="${y(0)}" stroke="#ddd2bd"/>
+      <line x1="${pl}" y1="${y(100)}" x2="${W-pr}" y2="${y(100)}" stroke="#f0e9dc"/>
+      ${line('real','#24201c')}${line('self','#c98a1e')}${ticks}
+      <text class="lbl" fill="#9a8f7e" x="4" y="${y(100)+4}">100</text></svg>
+    <div class="legend" style="padding-left:8px">
+      <span><i class="swatch" style="background:#24201c"></i>真實${c.craftL}</span>
+      <span><i class="swatch" style="background:#c98a1e"></i>你以為的自己</span></div></div>`;
+}
+titleScreen();
+</script>
+</body>
+</html>
