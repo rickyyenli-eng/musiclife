@@ -129,15 +129,15 @@ const rnd0=v=>{const n=Math.round(v);return Object.is(n,-0)?0:n};   // 避免印
    每個職業盯的數字不一樣，body 是他會燒掉的那個東西 */
 const CAREERS={
  singer:{n:'歌手',d:'站在前面的人',fameL:'聲量',bodyL:'嗓子',craftL:'唱功',
-   unit:'人',metric:'演出場次',inc:0.6,e:{fame:6,craft:-1,body:0}},
+   unit:'人',metric:'演出場次',inc:0.6,cut:{hi:90,mid:72,lo:39,gap:38},e:{fame:6,craft:-1,body:0}},
  producer:{n:'製作人',d:'讓別人聽起來很好的人',fameL:'掛名',bodyL:'耳朵',craftL:'品味',
-   unit:'首',metric:'掛名作品',inc:1.8,e:{craft:4,fame:-1,body:2}},
+   unit:'首',metric:'掛名作品',inc:1.8,cut:{hi:49,mid:32,lo:14,gap:58},e:{craft:4,fame:-1,body:2}},
  writer:{n:'詞曲作者',d:'歌比你先被認識',fameL:'被唱',bodyL:'存量',craftL:'筆力',
-   unit:'次',metric:'被唱過的歌',inc:0.9,e:{craft:6,fame:-3,body:-2}},
+   unit:'次',metric:'被唱過的歌',inc:0.9,cut:{hi:42,mid:26,lo:12,gap:56},e:{craft:6,fame:-3,body:-2}},
  session:{n:'樂手',d:'被指名的那雙手',fameL:'通告',bodyL:'手',craftL:'技術',
-   unit:'場',metric:'錄音／演出場次',inc:2.6,e:{craft:7,fame:-2,body:-1}},
+   unit:'場',metric:'錄音／演出場次',inc:2.6,cut:{hi:60,mid:37,lo:16,gap:60},e:{craft:7,fame:-2,body:-1}},
  teacher:{n:'音樂老師',d:'把東西交出去的人',fameL:'口碑',bodyL:'熱情',craftL:'底子',
-   unit:'人',metric:'教過的學生',inc:2.4,e:{craft:3,fame:-2,body:4,money:6}}
+   unit:'人',metric:'教過的學生',inc:2.4,cut:{hi:44,mid:28,lo:12,gap:59},e:{craft:3,fame:-2,body:4,money:6}}
 };
 /* 四種天賦原型，五個職業各有各的說法，但吃的是同一套倍率 */
 const ARCH={
@@ -514,8 +514,8 @@ const SWITCH={
  singer:[['producer','退到控台後面，做別人的歌'],['teacher','開一間教室']],
  producer:[['singer','自己站到前面試試看'],['teacher','把會的東西交出去']],
  writer:[['singer','沒人要唱，那我自己唱'],['producer','從寫歌到把整首做完']],
- session:[['producer','從彈的人變成決定怎麼彈的人'],['teacher','開始收學生']],
- teacher:[['producer','幫學生做第一張'],['writer','把這些年寫的東西整理出來']]
+ session:[['producer','從彈的人變成決定怎麼彈的人'],['singer','從伴奏走到台前，自己唱']],
+ teacher:[['singer','四十歲了，你想自己站上去一次'],['writer','把這些年寫的東西整理出來']]
 };
 
 /* ===== 引擎 ===== */
@@ -767,8 +767,10 @@ function resolveEnding(s,how){
 /* ===== 評語：從這一局實際發生的事組出來，不是罐頭 ===== */
 
 /* ===== 最終身分：規模＋路線＋職業，組出一句明確的話 ===== */
+const SWMIN={singer:1,teacher:2,producer:2,writer:2,session:1};
+const CUTS={singer:{f88:75,gHi:-7,f68:47,gLo:-52,f12:24},teacher:{f88:48,gHi:-23,f68:30,gLo:-58,f12:11},producer:{f88:54,gHi:-22,f68:29,gLo:-61,f12:11},writer:{f88:49,gHi:-21,f68:29,gLo:-58,f12:13},session:{f88:56,gHi:-29,f68:40,gLo:-64,f12:14}};
 function identityOf(s,tk){
-  const c=s.career,f=s.fame,cr=s.craft;
+  const c=s.career,f=s.fame,cr=s.craft,K=CUTS[c],gap=f-cr;
   const NOUN={
    singer:{high:'流行歌手',mid:'專職歌手',low:'業餘歌手',fail:'半途退場的歌手'},
    producer:{high:'幕後製作人',mid:'專職製作人',low:'接案製作人',fail:'半途退場的製作人'},
@@ -776,15 +778,15 @@ function identityOf(s,tk){
    session:{high:'一線錄音室樂手',mid:'專職樂手',low:'兼差樂手',fail:'半途退場的樂手'},
    teacher:{high:'資深音樂老師',mid:'專職音樂老師',low:'兼課音樂老師',fail:'半途退場的音樂老師'}
   }[c][tk];
-  if(tk==='fail') return `你最後是一個${NOUN}。`;   // 職稱本身已含「的」，不再加修飾
-  // 門檻依 800 局實測分位設定：聲量中位 25、實力中位 65、聲量減實力中位 −40
-  let mod;
-  if(f>=58&&tk!=='low') mod='全國都知道的';        // 聲量前 10%
-  else if(f-cr>=-8) mod='名氣跑在實力前面的';        // 落差前 12%
-  else if(f<=6) mod='沒沒無聞的';                  // 聲量後 10%
-  else if(f>=41) mod='小有名氣的';                 // 聲量前 25%
-  else if(s.path.length>2) mod='半路出家的';
-  else if(cr-f>=50) mod='硬底子的';                // 落差後 25%
+  if(tk==='fail') return `你最後是一個${NOUN}。`;
+  // 門檻取自各職業自己的分位，這樣老師不會被拿歌手的尺去量
+  let mod;                                  // 由好到壞，切點取自各職業自己的實測分位
+  if(f>=K.f88) mod='全國都知道的';
+  else if(gap>=K.gHi) mod='名氣跑在實力前面的';
+  else if(f>=K.f68) mod='小有名氣的';
+  else if(gap<=K.gLo) mod='硬底子的';
+  else if(f<=K.f12) mod='沒沒無聞的';
+  else if(s.path.length-1>=SWMIN[c]) mod='半路出家的';
   else mod='小圈子裡的';
   return `你最後是一個${mod}${NOUN}。`;
 }
